@@ -351,6 +351,12 @@ var data, activePerson=“Tim”, addingItem=null, newItemLabel=””;
 try{ data=JSON.parse(localStorage.getItem(STORAGE_KEY)||“null”)||JSON.parse(JSON.stringify(DEFAULT)); }
 catch(e){ data=JSON.parse(JSON.stringify(DEFAULT)); }
 
+window.onerror = function(msg, src, line, col, err) {
+document.getElementById(“app”).innerHTML = ‘<div style="color:red;padding:40px;font-family:sans-serif;background:white">’
++ ‘<h2>Script Error</h2><p>’ + msg + ’</p><p>Line: ’ + line + ‘</p></div>’;
+return true;
+};
+
 function save(){ try{localStorage.setItem(STORAGE_KEY,JSON.stringify(data));}catch(e){} render(); }
 
 function render(){
@@ -459,7 +465,16 @@ function addItem(p,t){ if(!newItemLabel.trim())return; data[p][t].push({id:“c_
 function addKey(e,p,t){ if(e.key===“Enter”)addItem(p,t); if(e.key===“Escape”)cancelAdd(); }
 function resetAll(){ if(confirm(“Reset all items for a new trip?”)){ data=JSON.parse(JSON.stringify(DEFAULT)); save(); } }
 
+try {
 render();
+} catch(e) {
+document.getElementById(“app”).innerHTML = ‘<div style="color:red;padding:40px;font-family:sans-serif;background:white">’
++ ‘<h2>JavaScript Error</h2>’
++ ‘<p>’ + e.message + ‘</p>’
++ ’<p>Line: ’ + (e.lineNumber || e.line || “unknown”) + ‘</p>’
++ ‘<pre>’ + e.stack + ‘</pre>’
++ ‘</div>’;
+}
 </script>
 
 </body>
