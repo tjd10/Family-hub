@@ -355,7 +355,7 @@ function save(){ try{localStorage.setItem(STORAGE_KEY,JSON.stringify(data));}cat
 
 function render(){
 var c=COLORS[activePerson];
-var allItems=PEOPLE.flatMap(p=>TIMES.flatMap(t=>data[p][t]));
+var allItems=[]; PEOPLE.forEach(function(p){TIMES.forEach(function(t){allItems=allItems.concat(data[p][t]);});});
 var totalActive=allItems.filter(i=>i.state!==“skip”).length;
 var totalPacked=allItems.filter(i=>i.state===“packed”).length;
 var critUnpacked=allItems.filter(i=>i.critical&&i.state===“unpacked”).length;
@@ -374,7 +374,7 @@ var html=’<div class="header">’
 
 PEOPLE.forEach(function(p){
 var pc=COLORS[p];
-var items=TIMES.flatMap(t=>data[p][t]);
+var items=[]; TIMES.forEach(function(t){items=items.concat(data[p][t]);});
 var packed=items.filter(i=>i.state===“packed”).length;
 var active=items.filter(i=>i.state!==“skip”).length;
 html+=’<button class=“tab’+(p===activePerson?” active”:””)+’” style=”–accent:’+pc.accent+’” onclick=“setTab('’+p+’')”>’
