@@ -9,13 +9,14 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
 
-  <!-- Firebase SDK -->
+  <!-- Firebase compat SDK (works reliably with Babel/React) -->
 
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-    import { getDatabase, ref, onValue, set, get } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 
-    const firebaseConfig = {
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+
+  <script>
+    firebase.initializeApp({
       apiKey: "AIzaSyD2Lv-JLxB8XkDmSCbyejwJVdLrsd2G0Bg",
       authDomain: "family-hub-cefcb.firebaseapp.com",
       databaseURL: "https://family-hub-cefcb-default-rtdb.europe-west1.firebasedatabase.app",
@@ -23,19 +24,8 @@
       storageBucket: "family-hub-cefcb.firebasestorage.app",
       messagingSenderId: "127444767723",
       appId: "1:127444767723:web:b9901ad035553d966fffae"
-    };
-
-    const app = initializeApp(firebaseConfig);
-    const db = getDatabase(app);
-
-    // Expose to window so Babel/React script can access
-    window._firebaseDb = db;
-    window._firebaseRef = ref;
-    window._firebaseOnValue = onValue;
-    window._firebaseSet = set;
-    window._firebaseGet = get;
-    window._firebaseReady = true;
-    window.dispatchEvent(new Event("firebaseReady"));
+    });
+    window._db = firebase.database();
   </script>
 
   <style>
@@ -377,67 +367,43 @@ function App() {
   const [addingItem, setAddingItem] = useState(null);
   const [newItemLabel, setNewItemLabel] = useState("");
   const [syncStatus, setSyncStatus] = useState("loading"); // "loading" | "live" | "error"
-  const isRemoteUpdate = useRef(false);
-
-  // Wait for Firebase to be ready, then subscribe
+  // Subscribe to Firebase
   useEffect(() => {
-    const setup = () => {
-      const db = window._firebaseDb;
-      const fbRef = window._firebaseRef;
-      const onValue = window._firebaseOnValue;
-      const fbSet = window._firebaseSet;
-      const fbGet = window._firebaseGet;
+    const db = window._db;
+    if (!db) { setSyncStatus("error"); setData(JSON.parse(JSON.stringify(defaultData))); return; }
 
-      if (!db) { setSyncStatus("error"); return; }
+    const dataRef = db.ref(DB_PATH);
 
-      const dataRef = fbRef(db, DB_PATH);
+    // Seed DB if empty
+    dataRef.once("value").then(snapshot => {
+      if (!snapshot.exists()) {
+        dataRef.set(JSON.parse(JSON.stringify(defaultData)));
+      }
+    });
 
-      // First load: if DB is empty, seed with defaultData
-      fbGet(dataRef).then(snapshot => {
-        if (!snapshot.exists()) {
-          fbSet(dataRef, JSON.parse(JSON.stringify(defaultData)));
-        }
-      });
+    // Live listener
+    dataRef.on("value", (snapshot) => {
+      const val = snapshot.val();
+      setData(val || JSON.parse(JSON.stringify(defaultData)));
+      setSyncStatus("live");
+    }, (error) => {
+      console.error("Firebase error:", error);
+      setSyncStatus("error");
+      setData(JSON.parse(JSON.stringify(defaultData)));
+    });
 
-      // Subscribe to live updates
-      const unsubscribe = onValue(dataRef, (snapshot) => {
-        const val = snapshot.val();
-        if (val) {
-          isRemoteUpdate.current = true;
-          setData(val);
-          setSyncStatus("live");
-        } else {
-          setData(JSON.parse(JSON.stringify(defaultData)));
-          setSyncStatus("live");
-        }
-      }, (error) => {
-        console.error("Firebase error:", error);
-        setSyncStatus("error");
-        // Fall back to defaultData if Firebase fails
-        setData(JSON.parse(JSON.stringify(defaultData)));
-      });
-
-      return unsubscribe;
-    };
-
-    if (window._firebaseReady) {
-      setup();
-    } else {
-      window.addEventListener("firebaseReady", setup, { once: true });
-    }
+    return () => dataRef.off();
   }, []);
 
-  // Save to Firebase (debounced slightly to avoid write storms on qty changes)
+  // Save to Firebase (debounced)
   const saveTimeout = useRef(null);
   const saveToFirebase = useCallback((newData) => {
     setData(newData);
     if (saveTimeout.current) clearTimeout(saveTimeout.current);
     saveTimeout.current = setTimeout(() => {
-      const db = window._firebaseDb;
-      const fbRef = window._firebaseRef;
-      const fbSet = window._firebaseSet;
+      const db = window._db;
       if (db) {
-        fbSet(fbRef(db, DB_PATH), newData).catch(err => {
+        db.ref(DB_PATH).set(newData).catch(err => {
           console.error("Save failed:", err);
           setSyncStatus("error");
         });
