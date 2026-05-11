@@ -1,16 +1,500 @@
 <!DOCTYPE html>
 
-<html>
+<html lang="en">
 <head>
-<meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Family Packing</title>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Family Packing</title>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{background:#071520;font-family:Georgia,serif;color:#e0f2fe;padding-bottom:60px}
+    button{font-family:Georgia,serif;cursor:pointer}
+    h1{font-size:22px;font-weight:normal;color:#f0f9ff}
+    .header{background:linear-gradient(135deg,#0c2340,#071520);border-bottom:1px solid #1a3050;padding:20px 16px 0;position:sticky;top:0;z-index:20}
+    .header-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px}
+    .brand{font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:#38bdf8;margin-bottom:4px}
+    .stats{text-align:right;font-size:12px;color:#7dd3fc}
+    .critical-badge{background:rgba(239,68,68,.15);border:1px solid rgba(239,68,68,.35);border-radius:8px;padding:4px 10px;font-size:11px;color:#fca5a5;margin-bottom:4px}
+    .progress{height:3px;background:#1a3050;border-radius:2px;margin:12px 0 0;overflow:hidden}
+    .progress-bar{height:100%;background:linear-gradient(90deg,#0369a1,#38bdf8);border-radius:2px;transition:width .4s}
+    .tabs{display:flex;overflow-x:auto;margin-top:12px}
+    .tab{flex:1;min-width:58px;padding:8px 4px 10px;border:none;background:transparent;border-bottom:2px solid transparent;color:#3d6a8a;font-size:12px;font-family:Georgia,serif}
+    .tab.active{border-bottom-color:var(--accent);color:var(--accent)}
+    .content{max-width:600px;margin:0 auto;padding:20px 16px 0}
+    .section{margin-bottom:24px}
+    .section-header{display:flex;align-items:center;gap:8px;margin-bottom:8px;padding-left:2px;font-size:11px;letter-spacing:.15em;text-transform:uppercase}
+    .section-count{margin-left:auto;color:#3d6a8a}
+    .items{background:rgba(10,28,46,.7);border:1px solid #1a3050;border-radius:12px;overflow:hidden}
+    .item{display:flex;align-items:center;gap:10px;padding:11px 14px;border-top:1px solid #152840;transition:all .2s}
+    .item:first-child{border-top:none}
+    .item.packed{background:var(--light)}
+    .item.skip{opacity:.35}
+    .checkbox{width:24px;height:24px;border-radius:6px;border:2px solid #2a4a6a;background:transparent;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .2s}
+    .checkbox.checked{background:var(--accent);border-color:var(--accent)}
+    .dot{width:6px;height:6px;border-radius:50%;background:#ef4444;flex-shrink:0}
+    .label{flex:1;font-size:14px;color:#d0eaff;transition:all .2s}
+    .label.packed{color:#3d6a8a;text-decoration:line-through}
+    .label.skip{color:#2a4a6a}
+    .hand{font-size:10px;color:#2a6090;margin-left:6px}
+    .qty-controls{display:flex;align-items:center;gap:5px;flex-shrink:0}
+    .qty-btn{width:20px;height:20px;border-radius:4px;border:1px solid #1e3a5f;background:transparent;color:#7dd3fc;font-size:14px;display:flex;align-items:center;justify-content:center}
+    .qty-val{font-size:13px;color:#38bdf8;min-width:16px;text-align:center}
+    .skip-btn{width:26px;height:26px;border-radius:6px;border:1px solid #1e3a5f;background:transparent;color:#2a4a6a;font-size:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .2s}
+    .skip-btn.skipped{border-color:#4d7a9a;background:rgba(77,122,154,.2);color:#7dd3fc}
+    .add-row{display:flex;gap:8px;padding:10px 14px;border-top:1px solid #152840}
+    .add-input{flex:1;background:rgba(14,165,233,.08);border:1px solid #2a4a6a;border-radius:6px;padding:6px 10px;color:#e0f2fe;font-size:14px;font-family:Georgia,serif;outline:none}
+    .add-confirm{border:none;border-radius:6px;padding:6px 12px;color:#071520;font-size:13px;font-weight:bold;font-family:Georgia,serif}
+    .add-cancel{background:transparent;border:1px solid #2a4a6a;border-radius:6px;padding:6px 10px;color:#7dd3fc;font-size:13px}
+    .add-trigger{width:100%;padding:10px 14px;border:none;border-top:1px solid #152840;background:transparent;color:#2a5070;font-size:13px;text-align:left;font-family:Georgia,serif}
+    .legend{display:flex;justify-content:center;gap:20px;font-size:11px;color:#3d6a8a;margin-bottom:24px;flex-wrap:wrap}
+    .reset-btn{background:transparent;border:1px solid #1a3050;color:#3d6a8a;padding:10px 24px;border-radius:8px;font-size:13px;display:block;margin:0 auto 20px}
+  </style>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+  <script>
+    firebase.initializeApp({
+      apiKey: "AIzaSyD2Lv-JLxB8XkDmSCbyejwJVdLrsd2G0Bg",
+      authDomain: "family-hub-cefcb.firebaseapp.com",
+      databaseURL: "https://family-hub-cefcb-default-rtdb.europe-west1.firebasedatabase.app",
+      projectId: "family-hub-cefcb",
+      storageBucket: "family-hub-cefcb.firebasestorage.app",
+      messagingSenderId: "127444767723",
+      appId: "1:127444767723:web:b9901ad035553d966fffae"
+    });
+  </script>
 </head>
-<body style="background:#071520;color:white;padding:40px;font-family:sans-serif">
-<h1>Family Packing List</h1>
-<p id="msg">Loading...</p>
+<body>
+<div id="app"></div>
 <script>
-document.getElementById("msg").innerText = "JavaScript is working!";
+var STORAGE_KEY="family-packing-v1";
+var PEOPLE=["Tim","Sarah","Paula","Zoe","Shared"];
+var TIMES=["Days Before","Morning Of","Last Minute"];
+var DISPLAY={Zoe:"Zo\u00ebë"};
+var ICONS={"Days Before":"📦","Morning Of":"🌅","Last Minute":"⚡"};
+var COLORS={
+  Tim:{accent:"#0ea5e9",light:"rgba(14,165,233,0.1)"},
+  Sarah:{accent:"#f59e0b",light:"rgba(245,158,11,0.1)"},
+  Paula:{accent:"#10b981",light:"rgba(16,185,129,0.1)"},
+  Zoe:{accent:"#a78bfa",light:"rgba(167,139,250,0.1)"},
+  Shared:{accent:"#fb7185",light:"rgba(251,113,133,0.1)"}
+};
+
+var DEFAULT={
+Tim:{“Days Before”:[
+{id:“t1”,label:“Long sleeve shirts”,critical:false,qty:0,state:“unpacked”,bag:“suitcase”},
+{id:“t2”,label:“Short sleeve shirts”,critical:false,qty:0,state:“unpacked”,bag:“suitcase”},
+{id:“t3”,label:“Polo shirts”,critical:false,qty:0,state:“unpacked”,bag:“suitcase”},
+{id:“t4”,label:“T-shirts”,critical:false,qty:0,state:“unpacked”,bag:“suitcase”},
+{id:“t5”,label:“Shorts”,critical:false,qty:0,state:“unpacked”,bag:“suitcase”},
+{id:“t6”,label:“Trousers”,critical:false,qty:0,state:“unpacked”,bag:“suitcase”},
+{id:“t7”,label:“Jeans”,critical:false,qty:0,state:“unpacked”,bag:“suitcase”},
+{id:“t8”,label:“Jumper”,critical:false,qty:0,state:“unpacked”,bag:“suitcase”},
+{id:“t9”,label:“Hoodie”,critical:false,qty:0,state:“unpacked”,bag:“suitcase”},
+{id:“t10”,label:“Rain jacket”,critical:false,qty:0,state:“unpacked”,bag:“suitcase”},
+{id:“t11”,label:“Swim shorts”,critical:false,qty:0,state:“unpacked”,bag:“suitcase”},
+{id:“t12”,label:“Rash vest”,critical:false,qty:0,state:“unpacked”,bag:“suitcase”},
+{id:“t13”,label:“Underwear”,critical:false,qty:0,state:“unpacked”,bag:“suitcase”},
+{id:“t14”,label:“Socks”,critical:false,qty:0,state:“unpacked”,bag:“suitcase”},
+{id:“t15”,label:“Sports socks”,critical:false,qty:0,state:“unpacked”,bag:“suitcase”},
+{id:“t16”,label:“Pyjamas”,critical:false,qty:0,state:“unpacked”,bag:“suitcase”},
+{id:“t17”,label:“Trainers”,critical:false,qty:0,state:“unpacked”,bag:“suitcase”},
+{id:“t18”,label:“Shoes”,critical:false,qty:0,state:“unpacked”,bag:“suitcase”},
+{id:“t19”,label:“Flip-flops”,critical:false,qty:0,state:“unpacked”,bag:“suitcase”},
+{id:“t20”,label:“Gym kit”,critical:false,qty:0,state:“unpacked”,bag:“suitcase”},
+{id:“t21”,label:“Sun cap”,critical:false,qty:0,state:“unpacked”,bag:“suitcase”},
+{id:“t22”,label:“Sunglasses”,critical:false,qty:0,state:“unpacked”,bag:“suitcase”},
+{id:“t23”,label:“Toothbrush”,critical:false,qty:0,state:“unpacked”,bag:“suitcase”},
+{id:“t24”,label:“Shaver”,critical:false,qty:0,state:“unpacked”,bag:“suitcase”},
+{id:“t25”,label:“Moisturiser”,critical:false,qty:0,state:“unpacked”,bag:“suitcase”},
+{id:“t26”,label:“Face cream”,critical:false,qty:0,state:“unpacked”,bag:“suitcase”},
+{id:“t27”,label:“Aftershave”,critical:false,qty:0,state:“unpacked”,bag:“suitcase”},
+{id:“t28”,label:“Tissues”,critical:false,qty:0,state:“unpacked”,bag:“suitcase”},
+{id:“t29”,label:“Floss”,critical:false,qty:0,state:“unpacked”,bag:“suitcase”},
+{id:“t30”,label:“Deodorant”,critical:false,qty:0,state:“unpacked”,bag:“suitcase”}
+],“Morning Of”:[
+{id:“t31”,label:“iPad”,critical:false,qty:0,state:“unpacked”,bag:“hand luggage”},
+{id:“t32”,label:“Headphones”,critical:false,qty:0,state:“unpacked”,bag:“hand luggage”},
+{id:“t33”,label:“Charging cable”,critical:false,qty:0,state:“unpacked”,bag:“hand luggage”},
+{id:“t34”,label:“Power bank”,critical:false,qty:0,state:“unpacked”,bag:“hand luggage”},
+{id:“t35”,label:“Book”,critical:false,qty:0,state:“unpacked”,bag:“hand luggage”},
+{id:“t36”,label:“Pen”,critical:false,qty:0,state:“unpacked”,bag:“hand luggage”},
+{id:“t37”,label:“Hand sanitiser”,critical:false,qty:0,state:“unpacked”,bag:“hand luggage”},
+{id:“t38”,label:“Travel games”,critical:false,qty:0,state:“unpacked”,bag:“hand luggage”},
+{id:“t39”,label:“Spare shirt”,critical:false,qty:0,state:“unpacked”,bag:“hand luggage”},
+{id:“t40”,label:“Spare socks”,critical:false,qty:0,state:“unpacked”,bag:“hand luggage”},
+{id:“t41”,label:“Spare underwear”,critical:false,qty:0,state:“unpacked”,bag:“hand luggage”},
+{id:“t42”,label:“Travel deodorant”,critical:false,qty:0,state:“unpacked”,bag:“hand luggage”},
+{id:“t43”,label:“Maxidex”,critical:true,qty:0,state:“unpacked”,bag:“hand luggage”},
+{id:“t44”,label:“Anti-malarials”,critical:true,qty:0,state:“unpacked”,bag:“hand luggage”},
+{id:“t45”,label:“Medication”,critical:false,qty:0,state:“unpacked”,bag:“hand luggage”}
+],“Last Minute”:[
+{id:“t46”,label:“Passport”,critical:true,qty:0,state:“unpacked”,bag:“hand luggage”},
+{id:“t47”,label:“Phone”,critical:true,qty:0,state:“unpacked”,bag:“hand luggage”},
+{id:“t48”,label:“Wallet”,critical:false,qty:0,state:“unpacked”,bag:“hand luggage”},
+{id:“t49”,label:“Credit cards”,critical:true,qty:0,state:“unpacked”,bag:“hand luggage”},
+{id:“t50”,label:“Driving licence”,critical:true,qty:0,state:“unpacked”,bag:“hand luggage”},
+{id:“t51”,label:“Foreign currency”,critical:false,qty:0,state:“unpacked”,bag:“hand luggage”},
+{id:“t52”,label:“Travel documents”,critical:false,qty:0,state:“unpacked”,bag:“hand luggage”},
+{id:“t53”,label:“Boarding passes”,critical:false,qty:0,state:“unpacked”,bag:“hand luggage”}
+]},
+Sarah:{“Days Before”:[
+{id:“s1”,label:“T-shirts”,critical:false,qty:0,state:“unpacked”,bag:“suitcase”},
+{id:“s2”,label:“Shirts”,critical:false,qty:0,state:“unpacked”,bag:“suitcase”},
+{id:“s3”,label:“Vest tops”,critical:false,qty:0,state:“unpacked”,bag:“suitcase”},
+{id:“s4”,label:“Jumper”,critical:false,qty:0,state:“unpacked”,bag:“suitcase”},
+{id:“s5”,label:“Hoodie”,critical:false,qty:0,state:“unpacked”,bag:“suitcase”},
+{id:“s6”,label:“Rain jacket”,critical:false,qty:0,state:“unpacked”,bag:“suitcase”},
+{id:“s7”,label:“Trousers”,critical:false,qty:0,state:“unpacked”,bag:“suitcase”},
+{id:“s8”,label:“Shorts”,critical:false,qty:0,state:“unpacked”,bag:“suitcase”},
+{id:“s9”,label:“Dresses”,critical:false,qty:0,state:“unpacked”,bag:“suitcase”},
+{id:“s10”,label:“Skirts”,critical:false,qty:0,state:“unpacked”,bag:“suitcase”},
+{id:“s11”,label:“Cardigans”,critical:false,qty:0,state:“unpacked”,bag:“suitcase”},
+{id:“s12”,label:“Swimwear”,critical:false,qty:0,state:“unpacked”,bag:“suitcase”},
+{id:“s13”,label:“Rash vest”,critical:false,qty:0,state:“unpacked”,bag:“suitcase”},
+{id:“s14”,label:“Underwear”,critical:false,qty:0,state:“unpacked”,bag:“suitcase”},
+{id:“s15”,label:“Socks”,critical:false,qty:0,state:“unpacked”,bag:“suitcase”},
+{id:“s16”,label:“Pyjamas”,critical:false,qty:0,state:“unpacked”,bag:“suitcase”},
+{id:“s17”,label:“Gym kit”,critical:false,qty:0,state:“unpacked”,bag:“suitcase”},
+{id:“s18”,label:“Trainers”,critical:false,qty:0,state:“unpacked”,bag:“suitcase”},
+{id:“s19”,label:“Shoes”,critical:false,qty:0,state:“unpacked”,bag:“suitcase”},
+{id:“s20”,label:“Flip-flops”,critical:false,qty:0,state:“unpacked”,bag:“suitcase”},
+{id:“s21”,label:“Sun cap”,critical:false,qty:0,state:“unpacked”,bag:“suitcase”},
+{id:“s22”,label:“Sunglasses”,critical:false,qty:0,state:“unpacked”,bag:“suitcase”},
+{id:“s23”,label:“Toothbrush”,critical:false,qty:0,state:“unpacked”,bag:“suitcase”},
+{id:“s24”,label:“Makeup”,critical:false,qty:0,state:“unpacked”,bag:“suitcase”},
+{id:“s25”,label:“Makeup remover”,critical:false,qty:0,state:“unpacked”,bag:“suitcase”},
+{id:“s26”,label:“Hairbrush”,critical:false,qty:0,state:“unpacked”,bag:“suitcase”},
+{id:“s27”,label:“Hair ties”,critical:false,qty:0,state:“unpacked”,bag:“suitcase”},
+{id:“s28”,label:“Deodorant”,critical:false,qty:0,state:“unpacked”,bag:“suitcase”},
+{id:“s29”,label:“Perfume”,critical:false,qty:0,state:“unpacked”,bag:“suitcase”},
+{id:“s30”,label:“Sanitary products”,critical:false,qty:0,state:“unpacked”,bag:“suitcase”}
+],“Morning Of”:[
+{id:“s31”,label:“iPad”,critical:false,qty:0,state:“unpacked”,bag:“hand luggage”},
+{id:“s32”,label:“Headphones”,critical:false,qty:0,state:“unpacked”,bag:“hand luggage”},
+{id:“s33”,label:“Charging cable”,critical:false,qty:0,state:“unpacked”,bag:“hand luggage”},
+{id:“s34”,label:“Power bank”,critical:false,qty:0,state:“unpacked”,bag:“hand luggage”},
+{id:“s35”,label:“Book”,critical:false,qty:0,state:“unpacked”,bag:“hand luggage”},
+{id:“s36”,label:“Pen”,critical:false,qty:0,state:“unpacked”,bag:“hand luggage”},
+{id:“s37”,label:“Hand sanitiser”,critical:false,qty:0,state:“unpacked”,bag:“hand luggage”},
+{id:“s38”,label:“Travel games”,critical:false,qty:0,state:“unpacked”,bag:“hand luggage”},
+{id:“s39”,label:“Spare shirt”,critical:false,qty:0,state:“unpacked”,bag:“hand luggage”},
+{id:“s40”,label:“Spare socks”,critical:false,qty:0,state:“unpacked”,bag:“hand luggage”},
+{id:“s41”,label:“Spare underwear”,critical:false,qty:0,state:“unpacked”,bag:“hand luggage”},
+{id:“s42”,label:“Travel deodorant”,critical:false,qty:0,state:“unpacked”,bag:“hand luggage”},
+{id:“s43”,label:“Anti-malarials”,critical:true,qty:0,state:“unpacked”,bag:“hand luggage”},
+{id:“s44”,label:“Medication”,critical:false,qty:0,state:“unpacked”,bag:“hand luggage”}
+],“Last Minute”:[
+{id:“s45”,label:“Passport”,critical:true,qty:0,state:“unpacked”,bag:“hand luggage”},
+{id:“s46”,label:“Phone”,critical:true,qty:0,state:“unpacked”,bag:“hand luggage”},
+{id:“s47”,label:“Credit cards”,critical:true,qty:0,state:“unpacked”,bag:“hand luggage”},
+{id:“s48”,label:“Driving licence”,critical:true,qty:0,state:“unpacked”,bag:“hand luggage”},
+{id:“s49”,label:“Foreign currency”,critical:false,qty:0,state:“unpacked”,bag:“hand luggage”},
+{id:“s50”,label:“Travel documents”,critical:false,qty:0,state:“unpacked”,bag:“hand luggage”},
+{id:“s51”,label:“Boarding passes”,critical:false,qty:0,state:“unpacked”,bag:“hand luggage”}
+]},
+Paula:{“Days Before”:[
+{id:“p1”,label:“T-shirts”,critical:false,qty:0,state:“unpacked”,bag:“suitcase”},
+{id:“p2”,label:“Shirts”,critical:false,qty:0,state:“unpacked”,bag:“suitcase”},
+{id:“p3”,label:“Vest tops”,critical:false,qty:0,state:“unpacked”,bag:“suitcase”},
+{id:“p4”,label:“Jumper”,critical:false,qty:0,state:“unpacked”,bag:“suitcase”},
+{id:“p5”,label:“Hoodie”,critical:false,qty:0,state:“unpacked”,bag:“suitcase”},
+{id:“p6”,label:“Rain jacket”,critical:false,qty:0,state:“unpacked”,bag:“suitcase”},
+{id:“p7”,label:“Trousers”,critical:false,qty:0,state:“unpacked”,bag:“suitcase”},
+{id:“p8”,label:“Shorts”,critical:false,qty:0,state:“unpacked”,bag:“suitcase”},
+{id:“p9”,label:“Dresses”,critical:false,qty:0,state:“unpacked”,bag:“suitcase”},
+{id:“p10”,label:“Skirts”,critical:false,qty:0,state:“unpacked”,bag:“suitcase”},
+{id:“p11”,label:“Cardigans”,critical:false,qty:0,state:“unpacked”,bag:“suitcase”},
+{id:“p12”,label:“Swimwear”,critical:false,qty:0,state:“unpacked”,bag:“suitcase”},
+{id:“p13”,label:“Rash vest”,critical:false,qty:0,state:“unpacked”,bag:“suitcase”},
+{id:“p14”,label:“Underwear”,critical:false,qty:0,state:“unpacked”,bag:“suitcase”},
+{id:“p15”,label:“Socks”,critical:false,qty:0,state:“unpacked”,bag:“suitcase”},
+{id:“p16”,label:“Pyjamas”,critical:false,qty:0,state:“unpacked”,bag:“suitcase”},
+{id:“p17”,label:“Gym kit”,critical:false,qty:0,state:“unpacked”,bag:“suitcase”},
+{id:“p18”,label:“Trainers”,critical:false,qty:0,state:“unpacked”,bag:“suitcase”},
+{id:“p19”,label:“Shoes”,critical:false,qty:0,state:“unpacked”,bag:“suitcase”},
+{id:“p20”,label:“Flip-flops”,critical:false,qty:0,state:“unpacked”,bag:“suitcase”},
+{id:“p21”,label:“Sun cap”,critical:false,qty:0,state:“unpacked”,bag:“suitcase”},
+{id:“p22”,label:“Sunglasses”,critical:false,qty:0,state:“unpacked”,bag:“suitcase”},
+{id:“p23”,label:“Toothbrush”,critical:false,qty:0,state:“unpacked”,bag:“suitcase”},
+{id:“p24”,label:“Makeup”,critical:false,qty:0,state:“unpacked”,bag:“suitcase”},
+{id:“p25”,label:“Makeup remover”,critical:false,qty:0,state:“unpacked”,bag:“suitcase”},
+{id:“p26”,label:“Hairbrush”,critical:false,qty:0,state:“unpacked”,bag:“suitcase”},
+{id:“p27”,label:“Hair ties”,critical:false,qty:0,state:“unpacked”,bag:“suitcase”},
+{id:“p28”,label:“Deodorant”,critical:false,qty:0,state:“unpacked”,bag:“suitcase”},
+{id:“p29”,label:“Sanitary products”,critical:false,qty:0,state:“unpacked”,bag:“suitcase”}
+],“Morning Of”:[
+{id:“p30”,label:“iPad”,critical:false,qty:0,state:“unpacked”,bag:“hand luggage”},
+{id:“p31”,label:“Headphones”,critical:false,qty:0,state:“unpacked”,bag:“hand luggage”},
+{id:“p32”,label:“Charging cable”,critical:false,qty:0,state:“unpacked”,bag:“hand luggage”},
+{id:“p33”,label:“Power bank”,critical:false,qty:0,state:“unpacked”,bag:“hand luggage”},
+{id:“p34”,label:“Book”,critical:false,qty:0,state:“unpacked”,bag:“hand luggage”},
+{id:“p35”,label:“Pen”,critical:false,qty:0,state:“unpacked”,bag:“hand luggage”},
+{id:“p36”,label:“Snacks”,critical:false,qty:0,state:“unpacked”,bag:“hand luggage”},
+{id:“p37”,label:“Travel games”,critical:false,qty:0,state:“unpacked”,bag:“hand luggage”},
+{id:“p38”,label:“Spare shirt”,critical:false,qty:0,state:“unpacked”,bag:“hand luggage”},
+{id:“p39”,label:“Spare socks”,critical:false,qty:0,state:“unpacked”,bag:“hand luggage”},
+{id:“p40”,label:“Spare underwear”,critical:false,qty:0,state:“unpacked”,bag:“hand luggage”},
+{id:“p41”,label:“Travel deodorant”,critical:false,qty:0,state:“unpacked”,bag:“hand luggage”},
+{id:“p42”,label:“Anti-malarials”,critical:true,qty:0,state:“unpacked”,bag:“hand luggage”},
+{id:“p43”,label:“Medication”,critical:false,qty:0,state:“unpacked”,bag:“hand luggage”}
+],“Last Minute”:[
+{id:“p44”,label:“Passport”,critical:true,qty:0,state:“unpacked”,bag:“hand luggage”},
+{id:“p45”,label:“Phone”,critical:true,qty:0,state:“unpacked”,bag:“hand luggage”},
+{id:“p46”,label:“Credit cards”,critical:true,qty:0,state:“unpacked”,bag:“hand luggage”},
+{id:“p47”,label:“Driving licence”,critical:true,qty:0,state:“unpacked”,bag:“hand luggage”},
+{id:“p48”,label:“Foreign currency”,critical:false,qty:0,state:“unpacked”,bag:“hand luggage”},
+{id:“p49”,label:“Travel documents”,critical:false,qty:0,state:“unpacked”,bag:“hand luggage”},
+{id:“p50”,label:“Boarding passes”,critical:false,qty:0,state:“unpacked”,bag:“hand luggage”}
+]},
+Zoe:{“Days Before”:[
+{id:“z1”,label:“T-shirts”,critical:false,qty:0,state:“unpacked”,bag:“suitcase”},
+{id:“z2”,label:“Shirts”,critical:false,qty:0,state:“unpacked”,bag:“suitcase”},
+{id:“z3”,label:“Vest tops”,critical:false,qty:0,state:“unpacked”,bag:“suitcase”},
+{id:“z4”,label:“Jumper”,critical:false,qty:0,state:“unpacked”,bag:“suitcase”},
+{id:“z5”,label:“Hoodie”,critical:false,qty:0,state:“unpacked”,bag:“suitcase”},
+{id:“z6”,label:“Rain jacket”,critical:false,qty:0,state:“unpacked”,bag:“suitcase”},
+{id:“z7”,label:“Trousers”,critical:false,qty:0,state:“unpacked”,bag:“suitcase”},
+{id:“z8”,label:“Shorts”,critical:false,qty:0,state:“unpacked”,bag:“suitcase”},
+{id:“z9”,label:“Dresses”,critical:false,qty:0,state:“unpacked”,bag:“suitcase”},
+{id:“z10”,label:“Skirts”,critical:false,qty:0,state:“unpacked”,bag:“suitcase”},
+{id:“z11”,label:“Cardigans”,critical:false,qty:0,state:“unpacked”,bag:“suitcase”},
+{id:“z12”,label:“Swimwear”,critical:false,qty:0,state:“unpacked”,bag:“suitcase”},
+{id:“z13”,label:“Rash vest”,critical:false,qty:0,state:“unpacked”,bag:“suitcase”},
+{id:“z14”,label:“Underwear”,critical:false,qty:0,state:“unpacked”,bag:“suitcase”},
+{id:“z15”,label:“Socks”,critical:false,qty:0,state:“unpacked”,bag:“suitcase”},
+{id:“z16”,label:“Pyjamas”,critical:false,qty:0,state:“unpacked”,bag:“suitcase”},
+{id:“z17”,label:“Gym kit”,critical:false,qty:0,state:“unpacked”,bag:“suitcase”},
+{id:“z18”,label:“Trainers”,critical:false,qty:0,state:“unpacked”,bag:“suitcase”},
+{id:“z19”,label:“Shoes”,critical:false,qty:0,state:“unpacked”,bag:“suitcase”},
+{id:“z20”,label:“Flip-flops”,critical:false,qty:0,state:“unpacked”,bag:“suitcase”},
+{id:“z21”,label:“Sun cap”,critical:false,qty:0,state:“unpacked”,bag:“suitcase”},
+{id:“z22”,label:“Sunglasses”,critical:false,qty:0,state:“unpacked”,bag:“suitcase”},
+{id:“z23”,label:“Toothbrush”,critical:false,qty:0,state:“unpacked”,bag:“suitcase”},
+{id:“z24”,label:“Makeup”,critical:false,qty:0,state:“unpacked”,bag:“suitcase”},
+{id:“z25”,label:“Makeup remover”,critical:false,qty:0,state:“unpacked”,bag:“suitcase”},
+{id:“z26”,label:“Hairbrush”,critical:false,qty:0,state:“unpacked”,bag:“suitcase”},
+{id:“z27”,label:“Hair ties”,critical:false,qty:0,state:“unpacked”,bag:“suitcase”},
+{id:“z28”,label:“Deodorant”,critical:false,qty:0,state:“unpacked”,bag:“suitcase”},
+{id:“z29”,label:“Sanitary products”,critical:false,qty:0,state:“unpacked”,bag:“suitcase”}
+],“Morning Of”:[
+{id:“z30”,label:“iPad”,critical:false,qty:0,state:“unpacked”,bag:“hand luggage”},
+{id:“z31”,label:“Headphones”,critical:false,qty:0,state:“unpacked”,bag:“hand luggage”},
+{id:“z32”,label:“Charging cable”,critical:false,qty:0,state:“unpacked”,bag:“hand luggage”},
+{id:“z33”,label:“Power bank”,critical:false,qty:0,state:“unpacked”,bag:“hand luggage”},
+{id:“z34”,label:“Book”,critical:false,qty:0,state:“unpacked”,bag:“hand luggage”},
+{id:“z35”,label:“Pen”,critical:false,qty:0,state:“unpacked”,bag:“hand luggage”},
+{id:“z36”,label:“Snacks”,critical:false,qty:0,state:“unpacked”,bag:“hand luggage”},
+{id:“z37”,label:“Travel games”,critical:false,qty:0,state:“unpacked”,bag:“hand luggage”},
+{id:“z38”,label:“Spare shirt”,critical:false,qty:0,state:“unpacked”,bag:“hand luggage”},
+{id:“z39”,label:“Spare socks”,critical:false,qty:0,state:“unpacked”,bag:“hand luggage”},
+{id:“z40”,label:“Spare underwear”,critical:false,qty:0,state:“unpacked”,bag:“hand luggage”},
+{id:“z41”,label:“Travel deodorant”,critical:false,qty:0,state:“unpacked”,bag:“hand luggage”},
+{id:“z42”,label:“Anti-malarials”,critical:true,qty:0,state:“unpacked”,bag:“hand luggage”},
+{id:“z43”,label:“Medication”,critical:false,qty:0,state:“unpacked”,bag:“hand luggage”}
+],“Last Minute”:[
+{id:“z44”,label:“Passport”,critical:true,qty:0,state:“unpacked”,bag:“hand luggage”},
+{id:“z45”,label:“Phone”,critical:true,qty:0,state:“unpacked”,bag:“hand luggage”},
+{id:“z46”,label:“Credit cards”,critical:true,qty:0,state:“unpacked”,bag:“hand luggage”},
+{id:“z47”,label:“Driving licence”,critical:true,qty:0,state:“unpacked”,bag:“hand luggage”},
+{id:“z48”,label:“Foreign currency”,critical:false,qty:0,state:“unpacked”,bag:“hand luggage”},
+{id:“z49”,label:“Travel documents”,critical:false,qty:0,state:“unpacked”,bag:“hand luggage”},
+{id:“z50”,label:“Boarding passes”,critical:false,qty:0,state:“unpacked”,bag:“hand luggage”}
+]},
+Shared:{“Days Before”:[
+{id:“sh1”,label:“Travel adaptors”,critical:false,qty:0,state:“unpacked”,bag:“suitcase”},
+{id:“sh2”,label:“Mosquito spray”,critical:false,qty:0,state:“unpacked”,bag:“suitcase”},
+{id:“sh3”,label:“Mosquito bands”,critical:false,qty:0,state:“unpacked”,bag:“suitcase”},
+{id:“sh4”,label:“Sun cream”,critical:false,qty:0,state:“unpacked”,bag:“suitcase”},
+{id:“sh5”,label:“After-sun”,critical:false,qty:0,state:“unpacked”,bag:“suitcase”},
+{id:“sh6”,label:“Pool inflatables”,critical:false,qty:0,state:“unpacked”,bag:“suitcase”},
+{id:“sh7”,label:“Pool balls”,critical:false,qty:0,state:“unpacked”,bag:“suitcase”},
+{id:“sh8”,label:“Beach bag”,critical:false,qty:0,state:“unpacked”,bag:“suitcase”},
+{id:“sh9”,label:“Wet kit bags”,critical:false,qty:0,state:“unpacked”,bag:“suitcase”},
+{id:“sh10”,label:“Laundry bag”,critical:false,qty:0,state:“unpacked”,bag:“suitcase”},
+{id:“sh11”,label:“Washing cubes”,critical:false,qty:0,state:“unpacked”,bag:“suitcase”},
+{id:“sh12”,label:“Dishwasher cubes”,critical:false,qty:0,state:“unpacked”,bag:“suitcase”},
+{id:“sh13”,label:“Tea towel”,critical:false,qty:0,state:“unpacked”,bag:“suitcase”},
+{id:“sh14”,label:“Kitchen knife”,critical:false,qty:0,state:“unpacked”,bag:“suitcase”},
+{id:“sh15”,label:“Food bags”,critical:false,qty:0,state:“unpacked”,bag:“suitcase”},
+{id:“sh16”,label:“Shopping bags”,critical:false,qty:0,state:“unpacked”,bag:“suitcase”},
+{id:“sh17”,label:“Decaf coffee pods”,critical:false,qty:0,state:“unpacked”,bag:“suitcase”},
+{id:“sh18”,label:“Decaf teabags”,critical:false,qty:0,state:“unpacked”,bag:“suitcase”},
+{id:“sh19”,label:“Nespresso mugs”,critical:false,qty:0,state:“unpacked”,bag:“suitcase”},
+{id:“sh20”,label:“Champagne stopper”,critical:false,qty:0,state:“unpacked”,bag:“suitcase”},
+{id:“sh21”,label:“Platters wine guide”,critical:false,qty:0,state:“unpacked”,bag:“suitcase”},
+{id:“sh22”,label:“Torch”,critical:false,qty:0,state:“unpacked”,bag:“suitcase”},
+{id:“sh23”,label:“Sweets”,critical:false,qty:0,state:“unpacked”,bag:“suitcase”},
+{id:“sh24”,label:“Binoculars”,critical:false,qty:0,state:“unpacked”,bag:“suitcase”},
+{id:“sh25”,label:“Safari hat”,critical:false,qty:0,state:“unpacked”,bag:“suitcase”},
+{id:“sh26”,label:“Tissues”,critical:false,qty:0,state:“unpacked”,bag:“suitcase”},
+{id:“sh27”,label:“Nail clippers”,critical:false,qty:0,state:“unpacked”,bag:“suitcase”},
+{id:“sh28”,label:“Tweezers”,critical:false,qty:0,state:“unpacked”,bag:“suitcase”},
+{id:“sh29”,label:“Shampoo (Tim & Sarah)”,critical:false,qty:0,state:“unpacked”,bag:“suitcase”},
+{id:“sh30”,label:“Conditioner (Tim & Sarah)”,critical:false,qty:0,state:“unpacked”,bag:“suitcase”},
+{id:“sh31”,label:“Toothpaste (Tim & Sarah)”,critical:false,qty:0,state:“unpacked”,bag:“suitcase”},
+{id:“sh32”,label:“Shower gel (Tim & Sarah)”,critical:false,qty:0,state:“unpacked”,bag:“suitcase”},
+{id:“sh33”,label:“Shampoo (Paula & Zo\u00eb)”,critical:false,qty:0,state:“unpacked”,bag:“suitcase”},
+{id:“sh34”,label:“Conditioner (Paula & Zo\u00eb)”,critical:false,qty:0,state:“unpacked”,bag:“suitcase”},
+{id:“sh35”,label:“Toothpaste (Paula & Zo\u00eb)”,critical:false,qty:0,state:“unpacked”,bag:“suitcase”},
+{id:“sh36”,label:“Shower gel (Paula & Zo\u00eb)”,critical:false,qty:0,state:“unpacked”,bag:“suitcase”},
+{id:“sh37”,label:“More books”,critical:false,qty:0,state:“unpacked”,bag:“suitcase”},
+{id:“sh38”,label:“More games”,critical:false,qty:0,state:“unpacked”,bag:“suitcase”}
+],“Morning Of”:[
+{id:“sh39”,label:“Plasters”,critical:false,qty:0,state:“unpacked”,bag:“suitcase”},
+{id:“sh40”,label:“Ibuprofen”,critical:false,qty:0,state:“unpacked”,bag:“suitcase”},
+{id:“sh41”,label:“Paracetamol”,critical:false,qty:0,state:“unpacked”,bag:“suitcase”},
+{id:“sh42”,label:“Eye drops”,critical:false,qty:0,state:“unpacked”,bag:“suitcase”},
+{id:“sh43”,label:“Savlon”,critical:false,qty:0,state:“unpacked”,bag:“suitcase”},
+{id:“sh44”,label:“Bite cream”,critical:false,qty:0,state:“unpacked”,bag:“suitcase”},
+{id:“sh45”,label:“Antihistamine”,critical:false,qty:0,state:“unpacked”,bag:“suitcase”},
+{id:“sh46”,label:“Throat sweets”,critical:false,qty:0,state:“unpacked”,bag:“suitcase”},
+{id:“sh47”,label:“Lemsip”,critical:false,qty:0,state:“unpacked”,bag:“suitcase”},
+{id:“sh48”,label:“Rennie”,critical:false,qty:0,state:“unpacked”,bag:“suitcase”},
+{id:“sh49”,label:“Imodium”,critical:false,qty:0,state:“unpacked”,bag:“suitcase”},
+{id:“sh50”,label:“Rehydration salts”,critical:false,qty:0,state:“unpacked”,bag:“suitcase”}
+],“Last Minute”:[
+{id:“sh51”,label:“Travel documents (family)”,critical:true,qty:0,state:“unpacked”,bag:“hand luggage”},
+{id:“sh52”,label:“Foreign currency (family)”,critical:false,qty:0,state:“unpacked”,bag:“hand luggage”}
+]}
+};
+
+var data=null, activePerson=“Tim”, addingItem=null, newItemLabel=””;
+var db=firebase.database();
+var dbRef=db.ref(“packing-list”);
+
+// Show loading state
+document.getElementById(“app”).innerHTML=’<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;color:#7dd3fc;font-size:16px;gap:12px"><div style="font-size:28px">🕶</div><div>Connecting to Family Hub…</div></div>’;
+
+// Seed DB if empty, then listen for changes
+dbRef.once(“value”).then(function(snap){
+if(!snap.exists()){
+dbRef.set(JSON.parse(JSON.stringify(DEFAULT)));
+}
+});
+
+dbRef.on(“value”, function(snap){
+data = snap.val() || JSON.parse(JSON.stringify(DEFAULT));
+render();
+}, function(err){
+// Fallback to localStorage if Firebase fails
+try{ data=JSON.parse(localStorage.getItem(STORAGE_KEY)||“null”)||JSON.parse(JSON.stringify(DEFAULT)); }
+catch(e){ data=JSON.parse(JSON.stringify(DEFAULT)); }
+render();
+});
+
+function save(){
+dbRef.set(data).catch(function(){
+try{localStorage.setItem(STORAGE_KEY,JSON.stringify(data));}catch(e){}
+});
+render();
+}
+
+function render(){
+var c=COLORS[activePerson];
+var allItems=[];
+for(var pi=0;pi<PEOPLE.length;pi++){
+for(var ti=0;ti<TIMES.length;ti++){
+var arr=data[PEOPLE[pi]][TIMES[ti]];
+for(var ii=0;ii<arr.length;ii++) allItems.push(arr[ii]);
+}
+}
+var totalActive=0,totalPacked=0,critUnpacked=0;
+for(var i=0;i<allItems.length;i++){
+if(allItems[i].state!==“skip”) totalActive++;
+if(allItems[i].state===“packed”) totalPacked++;
+if(allItems[i].critical&&allItems[i].state===“unpacked”) critUnpacked++;
+}
+var pct=totalActive?Math.round(totalPacked/totalActive*100):0;
+
+var html=’<div class="header"><div style="max-width:600px;margin:0 auto">’
++’<div class="header-top"><div><div class="brand">🕶 Family Packing</div><h1>Master List</h1></div>’
++’<div class="stats">’+(critUnpacked>0?’<div class="critical-badge">⚠ ‘+critUnpacked+’ critical unpacked</div>’:’’)
++’<div>’+totalPacked+’/’+totalActive+’ packed</div></div></div>’
++’<div class="progress"><div class="progress-bar" style="width:'+pct+'%"></div></div>’
++’<div class="tabs">’;
+
+for(var pi=0;pi<PEOPLE.length;pi++){
+var p=PEOPLE[pi];
+var pc=COLORS[p];
+var items=[];
+for(var ti=0;ti<TIMES.length;ti++){
+var arr=data[p][TIMES[ti]];
+for(var ii=0;ii<arr.length;ii++) items.push(arr[ii]);
+}
+var packed=0,active=0;
+for(var i=0;i<items.length;i++){
+if(items[i].state!==“skip”) active++;
+if(items[i].state===“packed”) packed++;
+}
+html+=’<button class=“tab’+(p===activePerson?” active”:””)+’” style=”–accent:’+pc.accent+’” onclick=“setTab('’+p+’')”>’
++’<div>’+(DISPLAY[p]||p)+’</div><div style="font-size:10px;opacity:.8">’+packed+’/’+active+’</div></button>’;
+}
+
+html+=’</div></div></div><div class="content">’;
+
+for(var ti=0;ti<TIMES.length;ti++){
+var time=TIMES[ti];
+var items=data[activePerson][time];
+var activeCount=0,packedCount=0;
+for(var i=0;i<items.length;i++){
+if(items[i].state!==“skip”) activeCount++;
+if(items[i].state===“packed”) packedCount++;
+}
+html+=’<div class="section"><div class="section-header" style="color:'+c.accent+'">’
++ICONS[time]+’ ‘+time+’<span class="section-count">’+packedCount+’/’+activeCount+’</span></div>’
++’<div class="items">’;
+
+```
+for(var i=0;i<items.length;i++){
+  var item=items[i];
+  var isPacked=item.state==="packed";
+  var isSkip=item.state==="skip";
+  html+='<div class="item'+(isPacked?" packed":"")+(isSkip?" skip":"")+'" style="--accent:'+c.accent+';--light:'+c.light+'">'
+    +'<button class="checkbox'+(isPacked?" checked":"")+'" style="--accent:'+c.accent+'" onclick="toggle(\''+activePerson+'\',\''+time+'\',\''+item.id+'\')">'
+    +(isPacked?'<svg width="12" height="9" viewBox="0 0 12 9" fill="none"><path d="M1 4.5L4.5 8L11 1" stroke="#071520" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>':'')
+    +'</button>'
+    +(item.critical?'<div class="dot"></div>':'')
+    +'<span class="label'+(isPacked?" packed":"")+(isSkip?" skip":"")+'">'
+    +item.label+(item.bag==="hand luggage"?'<span class="hand">&#9992;</span>':'')+'</span>';
+  if(!isSkip){
+    html+='<div class="qty-controls">';
+    if(item.qty>0) html+='<button class="qty-btn" onclick="qty(\''+activePerson+'\',\''+time+'\',\''+item.id+'\',-1)">&minus;</button><span class="qty-val">'+item.qty+'</span>';
+    html+='<button class="qty-btn" onclick="qty(\''+activePerson+'\',\''+time+'\',\''+item.id+'\',1)">+</button></div>';
+  }
+  html+='<button class="skip-btn'+(isSkip?" skipped":"")+'" onclick="skip(\''+activePerson+'\',\''+time+'\',\''+item.id+'\')">'+(isSkip?'&#8629;':'&#10005;')+'</button></div>';
+}
+
+if(addingItem&&addingItem.person===activePerson&&addingItem.time===time){
+  html+='<div class="add-row"><input class="add-input" id="newitem" placeholder="Item name..." oninput="newItemLabel=this.value" onkeydown="addKey(event,\''+activePerson+'\',\''+time+'\')">'
+    +'<button class="add-confirm" style="background:'+c.accent+'" onclick="addItem(\''+activePerson+'\',\''+time+'\')">Add</button>'
+    +'<button class="add-cancel" onclick="cancelAdd()">&#10005;</button></div>';
+} else {
+  html+='<button class="add-trigger" onclick="startAdd(\''+activePerson+'\',\''+time+'\')">+ Add item</button>';
+}
+html+='</div></div>';
+```
+
+}
+
+html+=’<div class="legend"><span>● Critical</span><span>Tap to pack · ✕ = not this trip</span><span>✈ = hand luggage</span></div>’
++’<button class="reset-btn" onclick="resetAll()">Reset for new trip</button></div>’;
+
+document.getElementById(“app”).innerHTML=html;
+if(addingItem){var inp=document.getElementById(“newitem”);if(inp){inp.focus();inp.value=newItemLabel;}}
+}
+
+function setTab(p){activePerson=p;addingItem=null;newItemLabel=””;render();}
+function toggle(p,t,id){var item=data[p][t].find(function(i){return i.id===id;});if(!item||item.state===“skip”)return;item.state=item.state===“unpacked”?“packed”:“unpacked”;save();}
+function skip(p,t,id){var item=data[p][t].find(function(i){return i.id===id;});if(!item)return;item.state=item.state===“skip”?“unpacked”:“skip”;save();}
+function qty(p,t,id,d){var item=data[p][t].find(function(i){return i.id===id;});if(!item)return;item.qty=Math.max(0,(item.qty||0)+d);save();}
+function startAdd(p,t){addingItem={person:p,time:t};newItemLabel=””;render();}
+function cancelAdd(){addingItem=null;newItemLabel=””;render();}
+function addItem(p,t){if(!newItemLabel.trim())return;data[p][t].push({id:“c_”+Date.now(),label:newItemLabel.trim(),critical:false,qty:0,state:“unpacked”,bag:t===“Days Before”?“suitcase”:“hand luggage”});addingItem=null;newItemLabel=””;save();}
+function addKey(e,p,t){if(e.key===“Enter”)addItem(p,t);if(e.key===“Escape”)cancelAdd();}
+function resetAll(){if(confirm(“Reset all items for a new trip?”)){data=JSON.parse(JSON.stringify(DEFAULT));save();}}
+
+render();
 </script>
+
 </body>
 </html>
