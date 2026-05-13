@@ -12,6 +12,8 @@
     .header{background:linear-gradient(135deg,#0c2340,#071520);border-bottom:1px solid #1a3050;padding:20px 16px 0;position:sticky;top:0;z-index:20}
     .header-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px}
     .brand{font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:#38bdf8;margin-bottom:4px}
+    .trip-name{font-size:13px;color:#7dd3fc;margin-bottom:2px;cursor:pointer;display:inline-flex;align-items:center;gap:6px}
+    .trip-name:hover{color:#38bdf8}
     .stats{text-align:right;font-size:12px;color:#7dd3fc}
     .critical-badge{background:rgba(239,68,68,.15);border:1px solid rgba(239,68,68,.35);border-radius:8px;padding:4px 10px;font-size:11px;color:#fca5a5;margin-bottom:4px}
     .progress{height:3px;background:#1a3050;border-radius:2px;margin:12px 0 0;overflow:hidden}
@@ -46,20 +48,40 @@
     .add-cancel{background:transparent;border:1px solid #2a4a6a;border-radius:6px;padding:6px 10px;color:#7dd3fc;font-size:13px}
     .add-trigger{width:100%;padding:10px 14px;border:none;border-top:1px solid #152840;background:transparent;color:#2a5070;font-size:13px;text-align:left;font-family:Georgia,serif}
     .legend{display:flex;justify-content:center;gap:20px;font-size:11px;color:#3d6a8a;margin-bottom:24px;flex-wrap:wrap}
-    .reset-btn{background:transparent;border:1px solid #1a3050;color:#3d6a8a;padding:10px 24px;border-radius:8px;font-size:13px;display:block;margin:0 auto 20px}
+    .btn-row{display:flex;justify-content:center;gap:12px;padding-bottom:20px;flex-wrap:wrap}
+    .btn-secondary{background:transparent;border:1px solid #1a3050;color:#3d6a8a;padding:10px 20px;border-radius:8px;font-size:13px}
+    .btn-primary{background:rgba(14,165,233,0.15);border:1px solid rgba(14,165,233,0.3);color:#38bdf8;padding:10px 20px;border-radius:8px;font-size:13px}
     .sync-badge{font-size:9px;border-radius:4px;padding:2px 6px;margin-left:6px;vertical-align:middle}
     .sync-live{background:rgba(34,197,94,0.15);border:1px solid rgba(34,197,94,0.3);color:#86efac}
     .sync-off{background:rgba(251,113,133,0.15);border:1px solid rgba(251,113,133,0.3);color:#fca5a5}
+    /* Modal */
+    .modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:100;align-items:center;justify-content:center;padding:20px}
+    .modal-bg.open{display:flex}
+    .modal{background:#0c1e38;border:1px solid #1a3050;border-radius:16px;padding:24px;width:100%;max-width:480px;max-height:80vh;overflow-y:auto}
+    .modal h2{font-size:18px;font-weight:normal;color:#f0f9ff;margin-bottom:16px}
+    .modal-input{width:100%;background:rgba(14,165,233,.08);border:1px solid #2a4a6a;border-radius:8px;padding:10px 14px;color:#e0f2fe;font-size:14px;font-family:Georgia,serif;outline:none;margin-bottom:12px}
+    .modal-btn-row{display:flex;gap:10px;margin-top:8px}
+    .modal-btn-primary{flex:1;background:rgba(14,165,233,0.2);border:1px solid rgba(14,165,233,0.4);color:#38bdf8;padding:10px;border-radius:8px;font-size:14px;font-family:Georgia,serif}
+    .modal-btn-secondary{background:transparent;border:1px solid #1a3050;color:#3d6a8a;padding:10px 16px;border-radius:8px;font-size:14px;font-family:Georgia,serif}
+    .trip-card{background:rgba(10,28,46,.7);border:1px solid #1a3050;border-radius:10px;padding:14px 16px;margin-bottom:10px}
+    .trip-card-name{font-size:15px;color:#d0eaff;margin-bottom:4px}
+    .trip-card-meta{font-size:11px;color:#3d6a8a;margin-bottom:10px}
+    .trip-card-btns{display:flex;gap:8px;flex-wrap:wrap}
+    .trip-card-btn{font-size:11px;padding:5px 12px;border-radius:6px;border:1px solid #1a3050;background:transparent;color:#3d6a8a;font-family:Georgia,serif}
+    .trip-card-btn.restore{border-color:rgba(14,165,233,0.3);color:#38bdf8;background:rgba(14,165,233,0.08)}
+    .trip-card-btn.template{border-color:rgba(167,139,250,0.3);color:#a78bfa;background:rgba(167,139,250,0.08)}
+    .section-label{font-size:11px;letter-spacing:.15em;text-transform:uppercase;color:#3d6a8a;margin:16px 0 8px}
+    .empty-state{text-align:center;color:#3d6a8a;font-size:13px;padding:20px}
   </style>
 </head>
 <body>
-<div id="app"><div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;color:#7dd3fc;font-size:16px;gap:12px"><div style="font-size:28px">&#128374;</div><div>Loading Family Packing...</div></div></div>
+<div id="app"></div>
 <script>
 var BIN_ID="6a020287250b1311c3356262";
 var API_KEY="$2a$10$FK5/Rnl5zxs7AFaw4fLNbO1vja7sYIviAHtMAbduI4jEuAxmIGuIK";
 var BIN_URL="https://api.jsonbin.io/v3/b/"+BIN_ID;
 var POLL_INTERVAL=5000;
-var STORAGE_KEY="family-packing-v1";
+var LOCAL_KEY="family-packing-v2";
 var PEOPLE=["Tim","Sarah","Paula","Zoe","Shared"];
 var TIMES=["Days Before","Morning Of","Last Minute"];
 var DISPLAY={Zoe:"Zo\u00eb"};
@@ -71,7 +93,8 @@ var COLORS={
   Zoe:{accent:"#a78bfa",light:"rgba(167,139,250,0.1)"},
   Shared:{accent:"#fb7185",light:"rgba(251,113,133,0.1)"}
 };
-var DEFAULT={
+
+var DEFAULT_ITEMS={
   Tim:{"Days Before":[
     {id:"t1",label:"Long sleeve shirts",critical:false,qty:0,state:"unpacked",bag:"suitcase"},
     {id:"t2",label:"Short sleeve shirts",critical:false,qty:0,state:"unpacked",bag:"suitcase"},
@@ -350,8 +373,38 @@ var DEFAULT={
   ]}
 };
 
-var data=null, activePerson="Tim", addingItem=null, newItemLabel="", synced=false, saveTimer=null;
+// ── State ──
+var db=null, synced=false, saveTimer=null;
+var activePerson="Tim", addingItem=null, newItemLabel="";
+var activeModal=null; // "trips" | "newTrip" | "newFromTemplate"
+var newTripName="", newTripTravellers="", selectedTemplate=null;
 
+// JSONBin data structure:
+// { packing: { currentTrip: {id,name,travellers,items}, archive: [...], templates: [...] } }
+var packingData=null;
+
+function freshTrip(name,travellers,items){
+  return {id:"trip_"+Date.now(),name:name,travellers:travellers,createdAt:new Date().toISOString(),items:JSON.parse(JSON.stringify(items))};
+}
+
+function resetItems(items){
+  var result=JSON.parse(JSON.stringify(items));
+  for(var p in result){
+    for(var t in result[p]){
+      for(var i=0;i<result[p][t].length;i++){
+        result[p][t][i].state="unpacked";
+        result[p][t][i].qty=0;
+      }
+    }
+  }
+  return result;
+}
+
+function defaultPackingData(){
+  return {currentTrip:freshTrip("My First Trip","All family",DEFAULT_ITEMS),archive:[],templates:[]};
+}
+
+// ── JSONBin ──
 function fetchData(){
   var xhr=new XMLHttpRequest();
   xhr.open("GET",BIN_URL+"/latest",true);
@@ -359,14 +412,17 @@ function fetchData(){
   xhr.onload=function(){
     if(xhr.status===200){
       var res=JSON.parse(xhr.responseText);
-      data=res.record;
-      if(!data||!data.Tim){data=JSON.parse(JSON.stringify(DEFAULT));pushData();}
+      var rec=res.record||{};
+      if(rec.packing&&rec.packing.currentTrip){
+        packingData=rec.packing;
+      } else {
+        packingData=defaultPackingData();
+        pushData();
+      }
       synced=true;
       render();
       setTimeout(fetchData,POLL_INTERVAL);
-    } else {
-      fallback();
-    }
+    } else { fallback(); }
   };
   xhr.onerror=function(){fallback();};
   xhr.send();
@@ -374,47 +430,139 @@ function fetchData(){
 
 function pushData(){
   var xhr=new XMLHttpRequest();
-  xhr.open("PUT",BIN_URL,true);
-  xhr.setRequestHeader("Content-Type","application/json");
+  xhr.open("GET",BIN_URL+"/latest",true);
   xhr.setRequestHeader("X-Master-Key",API_KEY);
-  xhr.send(JSON.stringify(data));
+  xhr.onload=function(){
+    var existing={};
+    if(xhr.status===200){try{existing=JSON.parse(xhr.responseText).record||{};}catch(e){}}
+    existing.packing=packingData;
+    var xhr2=new XMLHttpRequest();
+    xhr2.open("PUT",BIN_URL,true);
+    xhr2.setRequestHeader("Content-Type","application/json");
+    xhr2.setRequestHeader("X-Master-Key",API_KEY);
+    xhr2.send(JSON.stringify(existing));
+  };
+  xhr.onerror=function(){
+    var xhr2=new XMLHttpRequest();
+    xhr2.open("PUT",BIN_URL,true);
+    xhr2.setRequestHeader("Content-Type","application/json");
+    xhr2.setRequestHeader("X-Master-Key",API_KEY);
+    xhr2.send(JSON.stringify({packing:packingData}));
+  };
+  xhr.send();
 }
 
 function fallback(){
-  if(!data){
-    try{data=JSON.parse(localStorage.getItem(STORAGE_KEY)||"null")||JSON.parse(JSON.stringify(DEFAULT));}
-    catch(e){data=JSON.parse(JSON.stringify(DEFAULT));}
-  }
-  synced=false;
-  render();
+  try{var s=localStorage.getItem(LOCAL_KEY);if(s)packingData=JSON.parse(s);}catch(e){}
+  if(!packingData)packingData=defaultPackingData();
+  synced=false;render();
 }
 
 function save(){
-  try{localStorage.setItem(STORAGE_KEY,JSON.stringify(data));}catch(e){}
+  try{localStorage.setItem(LOCAL_KEY,JSON.stringify(packingData));}catch(e){}
   render();
-  if(saveTimer) clearTimeout(saveTimer);
+  if(saveTimer)clearTimeout(saveTimer);
   saveTimer=setTimeout(pushData,500);
 }
 
+// ── Item actions ──
+function toggle(p,t,id){
+  var items=packingData.currentTrip.items[p][t];
+  for(var i=0;i<items.length;i++){if(items[i].id===id){if(items[i].state==="skip")return;items[i].state=items[i].state==="unpacked"?"packed":"unpacked";break;}}
+  save();
+}
+function skip(p,t,id){
+  var items=packingData.currentTrip.items[p][t];
+  for(var i=0;i<items.length;i++){if(items[i].id===id){items[i].state=items[i].state==="skip"?"unpacked":"skip";break;}}
+  save();
+}
+function qty(p,t,id,d){
+  var items=packingData.currentTrip.items[p][t];
+  for(var i=0;i<items.length;i++){if(items[i].id===id){items[i].qty=Math.max(0,(items[i].qty||0)+d);break;}}
+  save();
+}
+function addItemFn(p,t){
+  if(!newItemLabel.trim())return;
+  packingData.currentTrip.items[p][t].push({id:"c_"+Date.now(),label:newItemLabel.trim(),critical:false,qty:0,state:"unpacked",bag:t==="Days Before"?"suitcase":"hand luggage"});
+  addingItem=null;newItemLabel="";save();
+}
+
+// ── Trip actions ──
+function startNewTrip(){
+  if(!newTripName.trim()){alert("Please enter a trip name");return;}
+  // Archive current
+  packingData.archive.unshift(JSON.parse(JSON.stringify(packingData.currentTrip)));
+  // New trip from template or default
+  var baseItems=selectedTemplate?selectedTemplate.items:DEFAULT_ITEMS;
+  packingData.currentTrip=freshTrip(newTripName.trim(),newTripTravellers.trim()||"All family",resetItems(baseItems));
+  newTripName="";newTripTravellers="";selectedTemplate=null;
+  activeModal=null;save();
+}
+
+function saveAsTemplate(){
+  var name=prompt("Template name (e.g. 'Family of 4 - Beach'):");
+  if(!name||!name.trim())return;
+  packingData.templates.push({id:"tpl_"+Date.now(),name:name.trim(),createdAt:new Date().toISOString(),items:resetItems(packingData.currentTrip.items)});
+  save();
+  alert("Saved as template: "+name.trim());
+}
+
+function restoreArchived(idx){
+  if(!confirm("Restore '"+packingData.archive[idx].name+"' as the current trip? The current trip will be archived."))return;
+  var toRestore=packingData.archive.splice(idx,1)[0];
+  packingData.archive.unshift(JSON.parse(JSON.stringify(packingData.currentTrip)));
+  packingData.currentTrip=toRestore;
+  activeModal=null;save();
+}
+
+function deleteArchived(idx){
+  if(!confirm("Delete '"+packingData.archive[idx].name+"' from archive?"))return;
+  packingData.archive.splice(idx,1);save();
+}
+
+function deleteTemplate(idx){
+  if(!confirm("Delete template '"+packingData.templates[idx].name+"'?"))return;
+  packingData.templates.splice(idx,1);save();
+}
+
+function renameTripFn(){
+  var name=prompt("Rename trip:",packingData.currentTrip.name);
+  if(name&&name.trim())packingData.currentTrip.name=name.trim();
+  var trav=prompt("Who's going:",packingData.currentTrip.travellers||"All family");
+  if(trav&&trav.trim())packingData.currentTrip.travellers=trav.trim();
+  save();
+}
+
+// ── Render ──
 function render(){
-  if(!data){return;}
+  if(!packingData){
+    document.getElementById("app").innerHTML='<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;color:#7dd3fc;font-size:16px;gap:12px"><div style="font-size:28px">&#128374;</div><div>Loading...</div></div>';
+    return;
+  }
   var c=COLORS[activePerson];
-  var allItems=[],i,pi,ti,ii;
-  for(pi=0;pi<PEOPLE.length;pi++)for(ti=0;ti<TIMES.length;ti++){var a=data[PEOPLE[pi]][TIMES[ti]];for(ii=0;ii<a.length;ii++)allItems.push(a[ii]);}
-  var totalActive=0,totalPacked=0,critUnpacked=0;
+  var trip=packingData.currentTrip;
+  var allItems=[],pi,ti,ii;
+  for(pi=0;pi<PEOPLE.length;pi++)for(ti=0;ti<TIMES.length;ti++){var a=trip.items[PEOPLE[pi]][TIMES[ti]];for(ii=0;ii<a.length;ii++)allItems.push(a[ii]);}
+  var totalActive=0,totalPacked=0,critUnpacked=0,i;
   for(i=0;i<allItems.length;i++){if(allItems[i].state!=="skip")totalActive++;if(allItems[i].state==="packed")totalPacked++;if(allItems[i].critical&&allItems[i].state==="unpacked")critUnpacked++;}
   var pct=totalActive?Math.round(totalPacked/totalActive*100):0;
   var syncHtml=synced?'<span class="sync-badge sync-live">&#9679; Live</span>':'<span class="sync-badge sync-off">&#9679; Offline</span>';
 
   var html='<div class="header"><div style="max-width:600px;margin:0 auto">'
-    +'<div class="header-top"><div><div class="brand">&#128374; Family Packing '+syncHtml+'</div><h1>Master List</h1></div>'
+    +'<div class="header-top">'
+    +'<div>'
+    +'<div class="brand">&#128374; Family Packing '+syncHtml+'</div>'
+    +'<div class="trip-name" onclick="renameTripFn()">&#9992; '+trip.name+' <span style="font-size:10px;color:#3d6a8a">('+( trip.travellers||"All family")+')</span> <span style="font-size:10px;color:#2a4a6a">&#9998;</span></div>'
+    +'<h1>Master List</h1>'
+    +'</div>'
     +'<div class="stats">'+(critUnpacked>0?'<div class="critical-badge">&#9888; '+critUnpacked+' critical unpacked</div>':'')
     +'<div>'+totalPacked+'/'+totalActive+' packed</div></div></div>'
-    +'<div class="progress"><div class="progress-bar" style="width:'+pct+'%"></div></div><div class="tabs">';
+    +'<div class="progress"><div class="progress-bar" style="width:'+pct+'%"></div></div>'
+    +'<div class="tabs">';
 
   for(pi=0;pi<PEOPLE.length;pi++){
     var p=PEOPLE[pi],pc=COLORS[p],items=[],packed=0,active=0;
-    for(ti=0;ti<TIMES.length;ti++){var arr=data[p][TIMES[ti]];for(ii=0;ii<arr.length;ii++)items.push(arr[ii]);}
+    for(ti=0;ti<TIMES.length;ti++){var arr=trip.items[p][TIMES[ti]];for(ii=0;ii<arr.length;ii++)items.push(arr[ii]);}
     for(i=0;i<items.length;i++){if(items[i].state!=="skip")active++;if(items[i].state==="packed")packed++;}
     html+='<button class="tab'+(p===activePerson?" active":"")+'" style="--accent:'+pc.accent+'" onclick="setTab(\''+p+'\')">'
       +'<div>'+(DISPLAY[p]||p)+'</div><div style="font-size:10px;opacity:.8">'+packed+'/'+active+'</div></button>';
@@ -422,12 +570,12 @@ function render(){
   html+='</div></div></div><div class="content">';
 
   for(ti=0;ti<TIMES.length;ti++){
-    var time=TIMES[ti],items=data[activePerson][time],ac=0,pc2=0;
-    for(i=0;i<items.length;i++){if(items[i].state!=="skip")ac++;if(items[i].state==="packed")pc2++;}
+    var time=TIMES[ti],its=trip.items[activePerson][time],ac=0,pc2=0;
+    for(i=0;i<its.length;i++){if(its[i].state!=="skip")ac++;if(its[i].state==="packed")pc2++;}
     html+='<div class="section"><div class="section-header" style="color:'+c.accent+'">'
       +ICONS[time]+' '+time+'<span class="section-count">'+pc2+'/'+ac+'</span></div><div class="items">';
-    for(i=0;i<items.length;i++){
-      var item=items[i],isPacked=item.state==="packed",isSkip=item.state==="skip";
+    for(i=0;i<its.length;i++){
+      var item=its[i],isPacked=item.state==="packed",isSkip=item.state==="skip";
       html+='<div class="item'+(isPacked?" packed":"")+(isSkip?" skip":"")+'" style="--accent:'+c.accent+';--light:'+c.light+'">'
         +'<button class="checkbox'+(isPacked?" checked":"")+'" style="--accent:'+c.accent+'" onclick="toggle(\''+activePerson+'\',\''+time+'\',\''+item.id+'\')">'
         +(isPacked?'<svg width="12" height="9" viewBox="0 0 12 9" fill="none"><path d="M1 4.5L4.5 8L11 1" stroke="#071520" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>':'')
@@ -442,29 +590,95 @@ function render(){
       html+='<button class="skip-btn'+(isSkip?" skipped":"")+'" onclick="skip(\''+activePerson+'\',\''+time+'\',\''+item.id+'\')">'+(isSkip?"&#8629;":"&#10005;")+'</button></div>';
     }
     if(addingItem&&addingItem.person===activePerson&&addingItem.time===time){
-      html+='<div class="add-row"><input class="add-input" id="newitem" placeholder="Item name..." oninput="newItemLabel=this.value" onkeydown="addKey(event,\''+activePerson+'\',\''+time+'\')">'
-        +'<button class="add-confirm" style="background:'+c.accent+'" onclick="addItem(\''+activePerson+'\',\''+time+'\')">Add</button>'
+      html+='<div class="add-row"><input class="add-input" id="newitem" placeholder="Item name..." oninput="newItemLabel=this.value" onkeydown="addKeyFn(event,\''+activePerson+'\',\''+time+'\')">'
+        +'<button class="add-confirm" style="background:'+c.accent+'" onclick="addItemFn(\''+activePerson+'\',\''+time+'\')">Add</button>'
         +'<button class="add-cancel" onclick="cancelAdd()">&#10005;</button></div>';
     } else {
       html+='<button class="add-trigger" onclick="startAdd(\''+activePerson+'\',\''+time+'\')">+ Add item</button>';
     }
     html+='</div></div>';
   }
+
   html+='<div class="legend"><span>&#11044; Critical</span><span>Tap to pack &middot; &#10005; = not this trip</span><span>&#9992; = hand luggage</span></div>'
-    +'<button class="reset-btn" onclick="resetAll()">Reset for new trip</button></div>';
+    +'<div class="btn-row">'
+    +'<button class="btn-secondary" onclick="openTripsModal()">&#128218; Trips &amp; Templates</button>'
+    +'<button class="btn-primary" onclick="openNewTripModal()">+ New Trip</button>'
+    +'</div></div>';
+
+  // Trips modal
+  html+='<div class="modal-bg'+(activeModal==="trips"?" open":"")+'" id="modal-trips" onclick="closeModalBg(event)">'
+    +'<div class="modal">'
+    +'<h2>&#128218; Trips &amp; Templates</h2>'
+    +'<button class="btn-primary" style="width:100%;margin-bottom:16px" onclick="saveAsTemplate()">&#128190; Save current trip as template</button>'
+    +'<div class="section-label">Templates</div>';
+  if(packingData.templates.length===0){
+    html+='<div class="empty-state">No templates yet. Save a trip as a template to reuse it.</div>';
+  } else {
+    for(i=0;i<packingData.templates.length;i++){
+      var tpl=packingData.templates[i];
+      html+='<div class="trip-card">'
+        +'<div class="trip-card-name">'+tpl.name+'</div>'
+        +'<div class="trip-card-meta">Created '+tpl.createdAt.substring(0,10)+'</div>'
+        +'<div class="trip-card-btns">'
+        +'<button class="trip-card-btn template" onclick="useTemplate('+i+')">Use as base for new trip</button>'
+        +'<button class="trip-card-btn" onclick="deleteTemplate('+i+')">Delete</button>'
+        +'</div></div>';
+    }
+  }
+  html+='<div class="section-label" style="margin-top:20px">Archived Trips</div>';
+  if(packingData.archive.length===0){
+    html+='<div class="empty-state">No archived trips yet.</div>';
+  } else {
+    for(i=0;i<packingData.archive.length;i++){
+      var arc=packingData.archive[i];
+      var arcItems=[],arcPacked=0,arcActive=0,pi2,ti2,ii2;
+      for(pi2=0;pi2<PEOPLE.length;pi2++)for(ti2=0;ti2<TIMES.length;ti2++){var aa=arc.items[PEOPLE[pi2]][TIMES[ti2]];for(ii2=0;ii2<aa.length;ii2++)arcItems.push(aa[ii2]);}
+      for(var j=0;j<arcItems.length;j++){if(arcItems[j].state!=="skip")arcActive++;if(arcItems[j].state==="packed")arcPacked++;}
+      html+='<div class="trip-card">'
+        +'<div class="trip-card-name">'+arc.name+'</div>'
+        +'<div class="trip-card-meta">'+(arc.travellers||"All family")+' &middot; '+arcPacked+'/'+arcActive+' packed &middot; '+arc.createdAt.substring(0,10)+'</div>'
+        +'<div class="trip-card-btns">'
+        +'<button class="trip-card-btn restore" onclick="restoreArchived('+i+')">Restore as current</button>'
+        +'<button class="trip-card-btn template" onclick="archiveAsTemplate('+i+')">Save as template</button>'
+        +'<button class="trip-card-btn" onclick="deleteArchived('+i+')">Delete</button>'
+        +'</div></div>';
+    }
+  }
+  html+='<div class="modal-btn-row"><button class="modal-btn-secondary" onclick="closeModal()">Close</button></div>'
+    +'</div></div>';
+
+  // New trip modal
+  html+='<div class="modal-bg'+(activeModal==="newTrip"?" open":"")+'" id="modal-newtrip" onclick="closeModalBg(event)">'
+    +'<div class="modal">'
+    +'<h2>+ New Trip</h2>'
+    +(selectedTemplate?'<div style="font-size:12px;color:#a78bfa;margin-bottom:12px">&#128190; Using template: '+selectedTemplate.name+'</div>':'')
+    +'<input class="modal-input" id="new-trip-name" placeholder="Trip name (e.g. Lombok 2026)" oninput="newTripName=this.value" value="'+newTripName+'">'
+    +'<input class="modal-input" id="new-trip-trav" placeholder="Who\'s going (e.g. Tim & Sarah)" oninput="newTripTravellers=this.value" value="'+newTripTravellers+'">'
+    +'<p style="font-size:11px;color:#3d6a8a;margin-bottom:12px">The current trip will be archived. All items will reset to unpacked.</p>'
+    +'<div class="modal-btn-row">'
+    +'<button class="modal-btn-primary" onclick="startNewTrip()">Start Trip</button>'
+    +'<button class="modal-btn-secondary" onclick="closeModal()">Cancel</button>'
+    +'</div></div></div>';
+
   document.getElementById("app").innerHTML=html;
   if(addingItem){var inp=document.getElementById("newitem");if(inp){inp.focus();inp.value=newItemLabel;}}
 }
 
 function setTab(p){activePerson=p;addingItem=null;newItemLabel="";render();}
-function toggle(p,t,id){var item;for(var i=0;i<data[p][t].length;i++){if(data[p][t][i].id===id){item=data[p][t][i];break;}}if(!item||item.state==="skip")return;item.state=item.state==="unpacked"?"packed":"unpacked";save();}
-function skip(p,t,id){var item;for(var i=0;i<data[p][t].length;i++){if(data[p][t][i].id===id){item=data[p][t][i];break;}}if(!item)return;item.state=item.state==="skip"?"unpacked":"skip";save();}
-function qty(p,t,id,d){var item;for(var i=0;i<data[p][t].length;i++){if(data[p][t][i].id===id){item=data[p][t][i];break;}}if(!item)return;item.qty=Math.max(0,(item.qty||0)+d);save();}
 function startAdd(p,t){addingItem={person:p,time:t};newItemLabel="";render();}
 function cancelAdd(){addingItem=null;newItemLabel="";render();}
-function addItem(p,t){if(!newItemLabel.trim())return;data[p][t].push({id:"c_"+Date.now(),label:newItemLabel.trim(),critical:false,qty:0,state:"unpacked",bag:t==="Days Before"?"suitcase":"hand luggage"});addingItem=null;newItemLabel="";save();}
-function addKey(e,p,t){if(e.key==="Enter")addItem(p,t);if(e.key==="Escape")cancelAdd();}
-function resetAll(){if(confirm("Reset all items for a new trip?")){data=JSON.parse(JSON.stringify(DEFAULT));save();}}
+function addKeyFn(e,p,t){if(e.key==="Enter")addItemFn(p,t);if(e.key==="Escape")cancelAdd();}
+function openTripsModal(){activeModal="trips";render();}
+function openNewTripModal(){activeModal="newTrip";render();}
+function closeModal(){activeModal=null;render();}
+function closeModalBg(e){if(e.target===e.currentTarget)closeModal();}
+function useTemplate(idx){selectedTemplate=packingData.templates[idx];activeModal="newTrip";render();}
+function archiveAsTemplate(arcIdx){
+  var name=prompt("Template name:");
+  if(!name||!name.trim())return;
+  packingData.templates.push({id:"tpl_"+Date.now(),name:name.trim(),createdAt:new Date().toISOString(),items:resetItems(packingData.archive[arcIdx].items)});
+  save();
+}
 
 fetchData();
 </script>
