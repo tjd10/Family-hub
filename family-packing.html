@@ -374,7 +374,7 @@ var DEFAULT_ITEMS={
 };
 
 // ── State ──
-var db=null, synced=false, saveTimer=null;
+var db=null, synced=false, saveTimer=null, isSaving=false;
 var activePerson="Tim", addingItem=null, newItemLabel="";
 var activeModal=null; // "trips" | "newTrip" | "newFromTemplate"
 var newTripName="", newTripTravellers="", selectedTemplate=null;
@@ -413,14 +413,16 @@ function fetchData(){
     if(xhr.status===200){
       var res=JSON.parse(xhr.responseText);
       var rec=res.record||{};
-      if(rec.packing&&rec.packing.currentTrip){
-        packingData=rec.packing;
-      } else {
-        packingData=defaultPackingData();
-        pushData();
+      if(!isSaving){
+        if(rec.packing&&rec.packing.currentTrip){
+          packingData=rec.packing;
+        } else {
+          packingData=defaultPackingData();
+          pushData();
+        }
+        synced=true;
+        render();
       }
-      synced=true;
-      render();
       setTimeout(fetchData,POLL_INTERVAL);
     } else { fallback(); }
   };
@@ -429,6 +431,7 @@ function fetchData(){
 }
 
 function pushData(){
+  isSaving=true;
   var xhr=new XMLHttpRequest();
   xhr.open("GET",BIN_URL+"/latest",true);
   xhr.setRequestHeader("X-Master-Key",API_KEY);
@@ -440,6 +443,7 @@ function pushData(){
     xhr2.open("PUT",BIN_URL,true);
     xhr2.setRequestHeader("Content-Type","application/json");
     xhr2.setRequestHeader("X-Master-Key",API_KEY);
+    xhr2.onloadend=function(){isSaving=false;};
     xhr2.send(JSON.stringify(existing));
   };
   xhr.onerror=function(){
@@ -447,6 +451,7 @@ function pushData(){
     xhr2.open("PUT",BIN_URL,true);
     xhr2.setRequestHeader("Content-Type","application/json");
     xhr2.setRequestHeader("X-Master-Key",API_KEY);
+    xhr2.onloadend=function(){isSaving=false;};
     xhr2.send(JSON.stringify({packing:packingData}));
   };
   xhr.send();
