@@ -514,7 +514,30 @@ function saveAsTemplate(){
   var name=prompt("Template name (e.g. 'Family of 4 - Beach'):");
   if(!name||!name.trim())return;
   packingData.templates.push({id:"tpl_"+Date.now(),name:name.trim(),createdAt:new Date().toISOString(),items:resetItems(packingData.currentTrip.items)});
-  save();
+  console.log("Templates before save:", JSON.stringify(packingData.templates.map(function(t){return t.name;})));
+  // Push immediately, not debounced
+  isSaving=true;
+  var getXhr=new XMLHttpRequest();
+  getXhr.open("GET",BIN_URL+"/latest",true);
+  getXhr.setRequestHeader("X-Master-Key",API_KEY);
+  getXhr.onload=function(){
+    var existing={};
+    if(getXhr.status===200){try{existing=JSON.parse(getXhr.responseText).record||{};}catch(e){}}
+    existing.packing=packingData;
+    console.log("Saving to JSONBin:", JSON.stringify(existing.packing.templates.map(function(t){return t.name;})));
+    var putXhr=new XMLHttpRequest();
+    putXhr.open("PUT",BIN_URL,true);
+    putXhr.setRequestHeader("Content-Type","application/json");
+    putXhr.setRequestHeader("X-Master-Key",API_KEY);
+    putXhr.onload=function(){
+      console.log("PUT complete, status:", putXhr.status);
+      isSaving=false;
+    };
+    putXhr.onerror=function(){console.log("PUT failed");isSaving=false;};
+    putXhr.send(JSON.stringify(existing));
+  };
+  getXhr.send();
+  render();
   alert("Saved as template: "+name.trim());
 }
 
