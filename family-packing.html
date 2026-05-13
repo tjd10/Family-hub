@@ -15,31 +15,18 @@
     .section-title{font-size:11px;letter-spacing:.15em;text-transform:uppercase;color:#3d6a8a;margin:28px 0 12px;display:flex;align-items:center;justify-content:space-between}
     .section-add{font-size:18px;color:#2a4a6a;background:none;border:none;cursor:pointer;line-height:1}
     .section-add:hover{color:#38bdf8}
-    .countdown-card{background:linear-gradient(135deg,#0c2340,#071c38);border:1px solid #1a3050;border-radius:16px;padding:20px;margin-bottom:12px;position:relative;overflow:hidden}
+    .countdown-card{background:linear-gradient(135deg,#0c2340,#071c38);border:1px solid #1a3050;border-radius:16px;padding:20px;margin-bottom:12px}
     .countdown-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px}
     .countdown-name{font-size:16px;color:#f0f9ff;margin-bottom:2px}
     .countdown-date{font-size:11px;color:#3d6a8a}
-    .countdown-delete{background:none;border:none;color:#2a4a6a;font-size:14px;cursor:pointer;padding:2px 6px;border-radius:4px}
+    .countdown-delete{background:none;border:none;color:#2a4a6a;font-size:14px;cursor:pointer;padding:2px 6px}
     .countdown-delete:hover{color:#ef4444}
     .countdown-units{display:flex;gap:8px}
     .countdown-unit{flex:1;background:rgba(0,0,0,0.2);border-radius:10px;padding:10px 6px;text-align:center}
-    .countdown-num{font-size:clamp(20px,5vw,32px);color:#38bdf8;line-height:1;margin-bottom:4px;font-variant-numeric:tabular-nums}
+    .countdown-num{font-size:clamp(20px,5vw,32px);color:#38bdf8;line-height:1;margin-bottom:4px}
     .countdown-label{font-size:9px;letter-spacing:.15em;text-transform:uppercase;color:#3d6a8a}
     .countdown-departed{text-align:center;padding:16px;color:#3dd88e;font-size:14px}
-    .trip-card{background:rgba(10,28,46,.7);border:1px solid #1a3050;border-radius:14px;padding:18px 20px;margin-bottom:12px;display:block;cursor:pointer}
-    .trip-card:hover{border-color:#2a5070}
-    .trip-card-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px}
-    .trip-label{font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:#38bdf8;margin-bottom:4px}
-    .trip-name{font-size:18px;color:#f0f9ff}
-    .trip-who{font-size:12px;color:#3d6a8a;margin-top:2px}
-    .trip-pct{font-size:26px;font-weight:normal;color:#38bdf8;text-align:right}
-    .trip-pct-label{font-size:10px;color:#3d6a8a;text-align:right}
-    .progress{height:4px;background:#1a3050;border-radius:2px;overflow:hidden;margin-bottom:10px}
-    .progress-bar{height:100%;background:linear-gradient(90deg,#0369a1,#38bdf8);border-radius:2px;transition:width .4s}
-    .trip-stats{display:flex;gap:16px;flex-wrap:wrap}
-    .trip-stat{font-size:11px;color:#3d6a8a}
-    .trip-stat span{color:#7dd3fc}
-    .app-card{background:rgba(10,28,46,.7);border:1px solid #1a3050;border-radius:14px;padding:16px 20px;margin-bottom:10px;display:flex;align-items:center;gap:16px;cursor:pointer}
+    .app-card{background:rgba(10,28,46,.7);border:1px solid #1a3050;border-radius:14px;padding:16px 20px;margin-bottom:10px;display:flex;align-items:center;gap:16px}
     .app-card:hover{border-color:#2a5070}
     .app-icon{width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0}
     .app-info{flex:1}
@@ -82,45 +69,25 @@
   </div>
   <div id="countdowns-container"></div>
 
-  <div class="section-title">&#9992; Active Trip</div>
-  <div class="trip-card" id="trip-card" onclick="openPackingList()">
-    <div class="trip-card-top">
-      <div>
-        <div class="trip-label">Current trip</div>
-        <div class="trip-name" id="trip-name">Loading...</div>
-        <div class="trip-who" id="trip-who"></div>
-      </div>
-      <div>
-        <div class="trip-pct" id="trip-pct">--</div>
-        <div class="trip-pct-label">packed</div>
-      </div>
-    </div>
-    <div class="progress"><div class="progress-bar" id="trip-bar" style="width:0%"></div></div>
-    <div class="trip-stats">
-      <div class="trip-stat">&#9888; Critical unpacked: <span id="trip-critical">--</span></div>
-      <div class="trip-stat">&#10003; <span id="trip-packed">--</span> packed</div>
-    </div>
-  </div>
-
   <div class="section-title">Apps</div>
 
-  <div class="app-card" onclick="openPackingList()">
+  <a href="family-packing.html" class="app-card" style="text-decoration:none">
     <div class="app-icon" style="background:rgba(14,165,233,0.12);border:1px solid rgba(14,165,233,0.2)">&#128230;</div>
     <div class="app-info">
       <div class="app-name">Packing List</div>
-      <div class="app-desc">Tim, Sarah, Paula, Zoe - Days Before, Morning Of, Last Minute</div>
+      <div class="app-desc">Tim, Sarah, Paula, Zoe</div>
     </div>
     <div class="app-arrow">&#8250;</div>
-  </div>
+  </a>
 
-  <div class="app-card" onclick="openDeparture()">
+  <a href="departure-checklist.html" class="app-card" style="text-decoration:none">
     <div class="app-icon" style="background:rgba(245,200,66,0.12);border:1px solid rgba(245,200,66,0.2)">&#9989;</div>
     <div class="app-info">
       <div class="app-name">Departure Checklist</div>
       <div class="app-desc">Security, Kitchen, Waste, Utilities</div>
     </div>
     <div class="app-arrow">&#8250;</div>
-  </div>
+  </a>
 
   <div class="app-card soon">
     <div class="app-icon" style="background:rgba(251,113,133,0.12);border:1px solid rgba(251,113,133,0.2)">&#128722;</div>
@@ -150,13 +117,8 @@
 var BIN_ID="6a020287250b1311c3356262";
 var API_KEY="$2a$10$FK5/Rnl5zxs7AFaw4fLNbO1vja7sYIviAHtMAbduI4jEuAxmIGuIK";
 var BIN_URL="https://api.jsonbin.io/v3/b/"+BIN_ID;
-var PEOPLE=["Tim","Sarah","Paula","Zoe","Shared"];
-var TIMES=["Days Before","Morning Of","Last Minute"];
 var hubData=null;
 var tickTimer=null;
-
-function openPackingList(){ window.location.assign("family-packing.html"); }
-function openDeparture(){ window.location.assign("departure-checklist.html"); }
 
 function loadData(){
   var xhr=new XMLHttpRequest();
@@ -169,11 +131,6 @@ function loadData(){
       if(!hubData.countdowns)hubData.countdowns=[];
       document.getElementById("sync-dot").className="sync-dot live";
       document.getElementById("sync-text").textContent="Live";
-      if(rec.packing&&rec.packing.currentTrip){
-        updateTripCard(rec.packing.currentTrip);
-      } else {
-        showNoTrip();
-      }
       renderCountdowns();
       startTick();
     } else { showOffline(); }
@@ -223,18 +180,15 @@ function tickAll(){
     var target=new Date(cd.date).getTime();
     var diff=target-now;
     var dEl=document.getElementById("d-"+cd.id);
-    var hEl=document.getElementById("h-"+cd.id);
-    var mEl=document.getElementById("m-"+cd.id);
-    var sEl=document.getElementById("s-"+cd.id);
     if(!dEl)continue;
     if(diff<=0){
       var units=document.getElementById("units-"+cd.id);
       if(units)units.innerHTML='<div class="countdown-departed">Departed - have a great trip!</div>';
     } else {
       dEl.textContent=pad(Math.floor(diff/(1000*60*60*24)));
-      hEl.textContent=pad(Math.floor((diff%(1000*60*60*24))/(1000*60*60)));
-      mEl.textContent=pad(Math.floor((diff%(1000*60*60))/(1000*60)));
-      sEl.textContent=pad(Math.floor((diff%(1000*60))/1000));
+      document.getElementById("h-"+cd.id).textContent=pad(Math.floor((diff%(1000*60*60*24))/(1000*60*60)));
+      document.getElementById("m-"+cd.id).textContent=pad(Math.floor((diff%(1000*60*60))/(1000*60)));
+      document.getElementById("s-"+cd.id).textContent=pad(Math.floor((diff%(1000*60))/1000));
     }
   }
 }
@@ -273,39 +227,9 @@ function deleteCountdown(id){
   renderCountdowns();
 }
 
-function updateTripCard(trip){
-  document.getElementById("trip-name").textContent=trip.name||"Unnamed trip";
-  document.getElementById("trip-who").textContent=trip.travellers||"All family";
-  var allItems=[],pi,ti,ii;
-  for(pi=0;pi<PEOPLE.length;pi++){
-    for(ti=0;ti<TIMES.length;ti++){
-      var arr=trip.items[PEOPLE[pi]][TIMES[ti]];
-      for(ii=0;ii<arr.length;ii++)allItems.push(arr[ii]);
-    }
-  }
-  var total=0,packed=0,critical=0,i;
-  for(i=0;i<allItems.length;i++){
-    if(allItems[i].state!=="skip")total++;
-    if(allItems[i].state==="packed")packed++;
-    if(allItems[i].critical&&allItems[i].state==="unpacked")critical++;
-  }
-  var pct=total?Math.round(packed/total*100):0;
-  document.getElementById("trip-pct").textContent=pct+"%";
-  document.getElementById("trip-bar").style.width=pct+"%";
-  document.getElementById("trip-packed").textContent=packed+"/"+total;
-  document.getElementById("trip-critical").textContent=critical>0?critical:"None";
-}
-
-function showNoTrip(){
-  document.getElementById("trip-name").textContent="No active trip";
-  document.getElementById("trip-who").textContent="Start a new trip in the packing list";
-}
-
 function showOffline(){
   document.getElementById("sync-dot").className="sync-dot";
   document.getElementById("sync-text").textContent="Offline";
-  document.getElementById("trip-name").textContent="Tap to open packing list";
-  document.getElementById("trip-who").textContent="";
   document.getElementById("countdowns-container").innerHTML='<div style="font-size:12px;color:#2a4a6a;padding:12px 0 4px">Offline - countdowns unavailable</div>';
 }
 
