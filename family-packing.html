@@ -15,10 +15,7 @@
     .section-title{font-size:11px;letter-spacing:.15em;text-transform:uppercase;color:#3d6a8a;margin:28px 0 12px;display:flex;align-items:center;justify-content:space-between}
     .section-add{font-size:18px;color:#2a4a6a;background:none;border:none;cursor:pointer;line-height:1}
     .section-add:hover{color:#38bdf8}
-
-    /* Countdown cards */
     .countdown-card{background:linear-gradient(135deg,#0c2340,#071c38);border:1px solid #1a3050;border-radius:16px;padding:20px;margin-bottom:12px;position:relative;overflow:hidden}
-    .countdown-card::after{content:'';position:absolute;top:-60px;right:-60px;width:180px;height:180px;background:radial-gradient(circle,rgba(56,189,248,0.06) 0%,transparent 65%);pointer-events:none}
     .countdown-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px}
     .countdown-name{font-size:16px;color:#f0f9ff;margin-bottom:2px}
     .countdown-date{font-size:11px;color:#3d6a8a}
@@ -29,10 +26,7 @@
     .countdown-num{font-size:clamp(20px,5vw,32px);color:#38bdf8;line-height:1;margin-bottom:4px;font-variant-numeric:tabular-nums}
     .countdown-label{font-size:9px;letter-spacing:.15em;text-transform:uppercase;color:#3d6a8a}
     .countdown-departed{text-align:center;padding:16px;color:#3dd88e;font-size:14px}
-
-    /* Trip card */
-    .trip-card{background:rgba(10,28,46,.7);border:1px solid #1a3050;border-radius:14px;padding:18px 20px;margin-bottom:12px;text-decoration:none;display:block;transition:border-color .2s,transform .1s}
-    .trip-card:active{transform:scale(0.98)}
+    .trip-card{background:rgba(10,28,46,.7);border:1px solid #1a3050;border-radius:14px;padding:18px 20px;margin-bottom:12px;display:block;cursor:pointer}
     .trip-card:hover{border-color:#2a5070}
     .trip-card-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px}
     .trip-label{font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:#38bdf8;margin-bottom:4px}
@@ -45,10 +39,7 @@
     .trip-stats{display:flex;gap:16px;flex-wrap:wrap}
     .trip-stat{font-size:11px;color:#3d6a8a}
     .trip-stat span{color:#7dd3fc}
-
-    /* App cards */
-    .app-card{background:rgba(10,28,46,.7);border:1px solid #1a3050;border-radius:14px;padding:16px 20px;margin-bottom:10px;text-decoration:none;display:flex;align-items:center;gap:16px;transition:border-color .2s,transform .1s}
-    .app-card:active{transform:scale(0.98)}
+    .app-card{background:rgba(10,28,46,.7);border:1px solid #1a3050;border-radius:14px;padding:16px 20px;margin-bottom:10px;display:flex;align-items:center;gap:16px;cursor:pointer}
     .app-card:hover{border-color:#2a5070}
     .app-icon{width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0}
     .app-info{flex:1}
@@ -57,14 +48,10 @@
     .app-arrow{font-size:16px;color:#2a4a6a}
     .app-card.soon{opacity:.4;pointer-events:none}
     .soon-badge{font-size:10px;background:rgba(14,165,233,0.1);border:1px solid rgba(14,165,233,0.2);border-radius:4px;padding:2px 7px;color:#38bdf8;margin-left:8px;vertical-align:middle}
-
-    /* Sync */
     .sync-row{display:flex;align-items:center;gap:6px;margin-bottom:20px}
     .sync-dot{width:6px;height:6px;border-radius:50%;background:#ef4444}
     .sync-dot.live{background:#22c55e;box-shadow:0 0 6px #22c55e}
     .sync-text{font-size:11px;color:#3d6a8a}
-
-    /* Modal */
     .modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:100;align-items:center;justify-content:center;padding:20px}
     .modal-bg.open{display:flex}
     .modal{background:#0c1e38;border:1px solid #1a3050;border-radius:16px;padding:24px;width:100%;max-width:440px}
@@ -74,7 +61,6 @@
     .modal-btn-row{display:flex;gap:10px;margin-top:4px}
     .modal-btn-primary{flex:1;background:rgba(14,165,233,0.2);border:1px solid rgba(14,165,233,0.4);color:#38bdf8;padding:10px;border-radius:8px;font-size:14px;font-family:Georgia,serif;cursor:pointer}
     .modal-btn-secondary{background:transparent;border:1px solid #1a3050;color:#3d6a8a;padding:10px 16px;border-radius:8px;font-size:14px;font-family:Georgia,serif;cursor:pointer}
-
     .footer{text-align:center;font-size:11px;color:#1e3a5f;margin-top:40px}
   </style>
 </head>
@@ -90,16 +76,14 @@
     <div class="sync-text" id="sync-text">Connecting...</div>
   </div>
 
-  <!-- Countdowns -->
   <div class="section-title">
     <span>&#9200; Countdowns</span>
-    <button class="section-add" onclick="openAddCountdown()" title="Add countdown">&#43;</button>
+    <button class="section-add" onclick="openAddCountdown()">&#43;</button>
   </div>
   <div id="countdowns-container"></div>
 
-  <!-- Active trip -->
   <div class="section-title">&#9992; Active Trip</div>
-  <a href="https://tjd10.github.io/Family-hub/family-packing.html" class="trip-card" id="trip-card" style="display:block;text-decoration:none">
+  <div class="trip-card" id="trip-card" onclick="openPackingList()">
     <div class="trip-card-top">
       <div>
         <div class="trip-label">Current trip</div>
@@ -107,37 +91,36 @@
         <div class="trip-who" id="trip-who"></div>
       </div>
       <div>
-        <div class="trip-pct" id="trip-pct">—</div>
+        <div class="trip-pct" id="trip-pct">--</div>
         <div class="trip-pct-label">packed</div>
       </div>
     </div>
     <div class="progress"><div class="progress-bar" id="trip-bar" style="width:0%"></div></div>
     <div class="trip-stats">
-      <div class="trip-stat">&#9888; Critical unpacked: <span id="trip-critical">—</span></div>
-      <div class="trip-stat">&#10003; <span id="trip-packed">—</span> packed</div>
+      <div class="trip-stat">&#9888; Critical unpacked: <span id="trip-critical">--</span></div>
+      <div class="trip-stat">&#10003; <span id="trip-packed">--</span> packed</div>
     </div>
-  </a>
+  </div>
 
-  <!-- Apps -->
   <div class="section-title">Apps</div>
 
-  <a href="https://tjd10.github.io/Family-hub/family-packing.html" class="app-card" style="text-decoration:none">
+  <div class="app-card" onclick="openPackingList()">
     <div class="app-icon" style="background:rgba(14,165,233,0.12);border:1px solid rgba(14,165,233,0.2)">&#128230;</div>
     <div class="app-info">
       <div class="app-name">Packing List</div>
-      <div class="app-desc">Tim, Sarah, Paula, Zo&#235; &middot; Days Before, Morning Of, Last Minute</div>
+      <div class="app-desc">Tim, Sarah, Paula, Zoe - Days Before, Morning Of, Last Minute</div>
     </div>
     <div class="app-arrow">&#8250;</div>
-  </a>
+  </div>
 
-  <a href="https://tjd10.github.io/Family-hub/departure-checklist.html" class="app-card" style="text-decoration:none">
+  <div class="app-card" onclick="openDeparture()">
     <div class="app-icon" style="background:rgba(245,200,66,0.12);border:1px solid rgba(245,200,66,0.2)">&#9989;</div>
     <div class="app-info">
       <div class="app-name">Departure Checklist</div>
-      <div class="app-desc">Security, Kitchen, Waste, Utilities &middot; Pre-departure</div>
+      <div class="app-desc">Security, Kitchen, Waste, Utilities</div>
     </div>
     <div class="app-arrow">&#8250;</div>
-  </a>
+  </div>
 
   <div class="app-card soon">
     <div class="app-icon" style="background:rgba(251,113,133,0.12);border:1px solid rgba(251,113,133,0.2)">&#128722;</div>
@@ -148,10 +131,9 @@
     <div class="app-arrow">&#8250;</div>
   </div>
 
-  <div class="footer">Family Hub &middot; tjd10</div>
+  <div class="footer">Family Hub</div>
 </div>
 
-<!-- Add countdown modal -->
 <div class="modal-bg" id="modal-add" onclick="closeModalBg(event)">
   <div class="modal">
     <h2>&#43; Add Countdown</h2>
@@ -170,11 +152,12 @@ var API_KEY="$2a$10$FK5/Rnl5zxs7AFaw4fLNbO1vja7sYIviAHtMAbduI4jEuAxmIGuIK";
 var BIN_URL="https://api.jsonbin.io/v3/b/"+BIN_ID;
 var PEOPLE=["Tim","Sarah","Paula","Zoe","Shared"];
 var TIMES=["Days Before","Morning Of","Last Minute"];
-
-var hubData=null; // { countdowns: [{id,name,date}], ...other app data }
+var hubData=null;
 var tickTimer=null;
 
-// ── Fetch ──
+function openPackingList(){ window.location.assign("https://tjd10.github.io/Family-hub/family-packing.html"); }
+function openDeparture(){ window.location.assign("https://tjd10.github.io/Family-hub/departure-checklist.html"); }
+
 function loadData(){
   var xhr=new XMLHttpRequest();
   xhr.open("GET",BIN_URL+"/latest",true);
@@ -207,27 +190,25 @@ function pushData(){
   xhr.send(JSON.stringify(hubData));
 }
 
-// ── Countdowns ──
 function renderCountdowns(){
   var container=document.getElementById("countdowns-container");
   if(!hubData||!hubData.countdowns||hubData.countdowns.length===0){
-    container.innerHTML='<div style="font-size:12px;color:#2a4a6a;padding:12px 0 4px">No countdowns yet — tap + to add one.</div>';
+    container.innerHTML='<div style="font-size:12px;color:#2a4a6a;padding:12px 0 4px">No countdowns yet - tap + to add one.</div>';
     return;
   }
   var html="";
   for(var i=0;i<hubData.countdowns.length;i++){
     var cd=hubData.countdowns[i];
-    var dateStr=formatDate(cd.date);
     html+='<div class="countdown-card" id="cd-'+cd.id+'">'
       +'<div class="countdown-top">'
-      +'<div><div class="countdown-name">'+cd.name+'</div><div class="countdown-date">'+dateStr+'</div></div>'
-      +'<button class="countdown-delete" onclick="deleteCountdown(\''+cd.id+'\')" title="Remove">&#10005;</button>'
+      +'<div><div class="countdown-name">'+cd.name+'</div><div class="countdown-date">'+cd.date.replace("T"," ")+'</div></div>'
+      +'<button class="countdown-delete" onclick="deleteCountdown(\''+cd.id+'\')">&#10005;</button>'
       +'</div>'
       +'<div class="countdown-units" id="units-'+cd.id+'">'
-      +'<div class="countdown-unit"><div class="countdown-num" id="d-'+cd.id+'">—</div><div class="countdown-label">Days</div></div>'
-      +'<div class="countdown-unit"><div class="countdown-num" id="h-'+cd.id+'">—</div><div class="countdown-label">Hours</div></div>'
-      +'<div class="countdown-unit"><div class="countdown-num" id="m-'+cd.id+'">—</div><div class="countdown-label">Mins</div></div>'
-      +'<div class="countdown-unit"><div class="countdown-num" id="s-'+cd.id+'">—</div><div class="countdown-label">Secs</div></div>'
+      +'<div class="countdown-unit"><div class="countdown-num" id="d-'+cd.id+'">--</div><div class="countdown-label">Days</div></div>'
+      +'<div class="countdown-unit"><div class="countdown-num" id="h-'+cd.id+'">--</div><div class="countdown-label">Hours</div></div>'
+      +'<div class="countdown-unit"><div class="countdown-num" id="m-'+cd.id+'">--</div><div class="countdown-label">Mins</div></div>'
+      +'<div class="countdown-unit"><div class="countdown-num" id="s-'+cd.id+'">--</div><div class="countdown-label">Secs</div></div>'
       +'</div></div>';
   }
   container.innerHTML=html;
@@ -247,55 +228,35 @@ function tickAll(){
     var sEl=document.getElementById("s-"+cd.id);
     if(!dEl)continue;
     if(diff<=0){
-      dEl.textContent="0";hEl.textContent="0";mEl.textContent="0";sEl.textContent="0";
       var units=document.getElementById("units-"+cd.id);
-      if(units)units.innerHTML='<div class="countdown-departed">&#10004; Departed — have a great trip!</div>';
+      if(units)units.innerHTML='<div class="countdown-departed">Departed - have a great trip!</div>';
     } else {
-      var days=Math.floor(diff/(1000*60*60*24));
-      var hours=Math.floor((diff%(1000*60*60*24))/(1000*60*60));
-      var mins=Math.floor((diff%(1000*60*60))/(1000*60));
-      var secs=Math.floor((diff%(1000*60))/1000);
-      dEl.textContent=pad(days);
-      hEl.textContent=pad(hours);
-      mEl.textContent=pad(mins);
-      sEl.textContent=pad(secs);
+      dEl.textContent=pad(Math.floor(diff/(1000*60*60*24)));
+      hEl.textContent=pad(Math.floor((diff%(1000*60*60*24))/(1000*60*60)));
+      mEl.textContent=pad(Math.floor((diff%(1000*60*60))/(1000*60)));
+      sEl.textContent=pad(Math.floor((diff%(1000*60))/1000));
     }
   }
 }
 
 function pad(n){return n<10?"0"+n:""+n;}
-
-function startTick(){
-  if(tickTimer)clearInterval(tickTimer);
-  tickTimer=setInterval(tickAll,1000);
-}
-
-function formatDate(dateStr){
-  var parts=dateStr.split("-");
-  var months=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
-  return parts[2]+" "+months[parseInt(parts[1])-1]+" "+parts[0];
-}
+function startTick(){if(tickTimer)clearInterval(tickTimer);tickTimer=setInterval(tickAll,1000);}
 
 function openAddCountdown(){
   document.getElementById("cd-name").value="";
   document.getElementById("cd-date").value="";
   document.getElementById("modal-add").className="modal-bg open";
 }
-
-function closeModal(){
-  document.getElementById("modal-add").className="modal-bg";
-}
-
+function closeModal(){document.getElementById("modal-add").className="modal-bg";}
 function closeModalBg(e){if(e.target===e.currentTarget)closeModal();}
 
 function addCountdown(){
   var name=document.getElementById("cd-name").value.trim();
   var date=document.getElementById("cd-date").value;
   if(!name){alert("Please enter a name");return;}
-  if(!date){alert("Please pick a date");return;}
+  if(!date){alert("Please pick a date and time");return;}
   if(!hubData.countdowns)hubData.countdowns=[];
   hubData.countdowns.push({id:"cd_"+Date.now(),name:name,date:date});
-  // Sort by date
   hubData.countdowns.sort(function(a,b){return a.date<b.date?-1:1;});
   closeModal();
   pushData();
@@ -312,7 +273,6 @@ function deleteCountdown(id){
   renderCountdowns();
 }
 
-// ── Trip card ──
 function updateTripCard(trip){
   document.getElementById("trip-name").textContent=trip.name||"Unnamed trip";
   document.getElementById("trip-who").textContent=trip.travellers||"All family";
@@ -333,7 +293,7 @@ function updateTripCard(trip){
   document.getElementById("trip-pct").textContent=pct+"%";
   document.getElementById("trip-bar").style.width=pct+"%";
   document.getElementById("trip-packed").textContent=packed+"/"+total;
-  document.getElementById("trip-critical").textContent=critical>0?critical:"None &#10003;";
+  document.getElementById("trip-critical").textContent=critical>0?critical:"None";
 }
 
 function showNoTrip(){
@@ -346,10 +306,8 @@ function showOffline(){
   document.getElementById("sync-text").textContent="Offline";
   document.getElementById("trip-name").textContent="Tap to open packing list";
   document.getElementById("trip-who").textContent="";
-  document.getElementById("countdowns-container").innerHTML='<div style="font-size:12px;color:#2a4a6a;padding:12px 0 4px">Offline — countdowns unavailable</div>';
+  document.getElementById("countdowns-container").innerHTML='<div style="font-size:12px;color:#2a4a6a;padding:12px 0 4px">Offline - countdowns unavailable</div>';
 }
-
-function goTo(url){ window.location.href=url; }
 
 loadData();
 </script>
