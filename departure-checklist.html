@@ -140,10 +140,10 @@
   }
 })();
 
-var BIN_ID="6a020287250b1311c3356262";
+var BIN_ID="6a04c85cadc21f119a96971b";
 var API_KEY="$2a$10$FK5/Rnl5zxs7AFaw4fLNbO1vja7sYIviAHtMAbduI4jEuAxmIGuIK";
 var BIN_URL="https://api.jsonbin.io/v3/b/"+BIN_ID;
-var POLL_INTERVAL=5000;
+var POLL_INTERVAL=60000;
 var LOCAL_KEY="departure-checklist-v1";
 
 var DATA=[
@@ -162,6 +162,8 @@ var DATA=[
 var state={};
 var synced=false;
 var saveTimer=null;
+var addingGroup=null;
+var newLabel="";
 
 function ik(g,l){return g+"::"+l;}
 function countDone(){var n=0;for(var k in state){if(state[k])n++;}return n;}
@@ -305,7 +307,7 @@ function renderItems(){
       if(addingGroup===groupName){
         addRow.className='add-row';
         addRow.innerHTML='<input class="add-input" id="add-input-'+groupName+'" placeholder="New item..." />'
-          +'<button class="add-btn" onclick="confirmAdd(''+groupName+'')">Add</button>'
+          +'<button class="add-btn" onclick="confirmAdd(\'' +groupName+ '\')">Add</button>'
           +'<button class="add-btn" style="background:transparent;border-color:rgba(255,255,255,0.1);color:rgba(255,255,255,0.3)" onclick="cancelAdd()">&#10005;</button>';
         el.appendChild(addRow);
         setTimeout(function(){
@@ -313,7 +315,7 @@ function renderItems(){
           if(inp){inp.focus();inp.addEventListener('keydown',function(e){if(e.key==='Enter')confirmAdd(groupName);if(e.key==='Escape')cancelAdd();});}
         },50);
       } else {
-        addRow.innerHTML='<button class="add-trigger" onclick="startAdd(''+groupName+'')">+ Add item</button>';
+        addRow.innerHTML='<button class="add-trigger" onclick="startAdd(\'' +groupName+ '\')">+ Add item</button>';
         el.appendChild(addRow);
       }
     })(group.name);
