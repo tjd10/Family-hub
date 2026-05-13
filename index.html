@@ -140,11 +140,29 @@ function loadData(){
 }
 
 function pushData(){
-  var xhr=new XMLHttpRequest();
-  xhr.open("PUT",BIN_URL,true);
-  xhr.setRequestHeader("Content-Type","application/json");
-  xhr.setRequestHeader("X-Master-Key",API_KEY);
-  xhr.send(JSON.stringify(hubData));
+  // Read first, then merge countdowns in, then write back
+  // This prevents wiping out packing list data
+  var getXhr=new XMLHttpRequest();
+  getXhr.open("GET",BIN_URL+"/latest",true);
+  getXhr.setRequestHeader("X-Master-Key",API_KEY);
+  getXhr.onload=function(){
+    var existing={};
+    if(getXhr.status===200){try{existing=JSON.parse(getXhr.responseText).record||{};}catch(e){}}
+    existing.countdowns=hubData.countdowns;
+    var putXhr=new XMLHttpRequest();
+    putXhr.open("PUT",BIN_URL,true);
+    putXhr.setRequestHeader("Content-Type","application/json");
+    putXhr.setRequestHeader("X-Master-Key",API_KEY);
+    putXhr.send(JSON.stringify(existing));
+  };
+  getXhr.onerror=function(){
+    var putXhr=new XMLHttpRequest();
+    putXhr.open("PUT",BIN_URL,true);
+    putXhr.setRequestHeader("Content-Type","application/json");
+    putXhr.setRequestHeader("X-Master-Key",API_KEY);
+    putXhr.send(JSON.stringify(hubData));
+  };
+  getXhr.send();
 }
 
 function renderCountdowns(){
