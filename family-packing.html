@@ -99,7 +99,7 @@
 
   <!-- Active trip -->
   <div class="section-title">&#9992; Active Trip</div>
-  <div onclick="window.location.href='family-packing.html'" class="trip-card" id="trip-card" style="cursor:pointer">
+  <div class="trip-card" id="trip-card" style="cursor:pointer" onclick="window.location.href='family-packing.html'">
     <div class="trip-card-top">
       <div>
         <div class="trip-label">Current trip</div>
@@ -121,7 +121,7 @@
   <!-- Apps -->
   <div class="section-title">Apps</div>
 
-  <div onclick="window.location.href='family-packing.html'" class="app-card" style="cursor:pointer">
+  <div class="app-card" style="cursor:pointer" onclick="goTo('family-packing.html')">
     <div class="app-icon" style="background:rgba(14,165,233,0.12);border:1px solid rgba(14,165,233,0.2)">&#128230;</div>
     <div class="app-info">
       <div class="app-name">Packing List</div>
@@ -130,7 +130,7 @@
     <div class="app-arrow">&#8250;</div>
   </div>
 
-  <div onclick="window.location.href='departure-checklist.html'" class="app-card" style="cursor:pointer">
+  <div onclick="goTo('departure-checklist.html')" class="app-card" style="cursor:pointer">
     <div class="app-icon" style="background:rgba(245,200,66,0.12);border:1px solid rgba(245,200,66,0.2)">&#9989;</div>
     <div class="app-info">
       <div class="app-name">Departure Checklist</div>
@@ -156,7 +156,7 @@
   <div class="modal">
     <h2>&#43; Add Countdown</h2>
     <input class="modal-input" id="cd-name" placeholder="Name (e.g. Lombok 2026)" type="text"/>
-    <input class="modal-input" id="cd-date" type="date"/>
+    <input class="modal-input" id="cd-date" type="datetime-local"/>
     <div class="modal-btn-row">
       <button class="modal-btn-primary" onclick="addCountdown()">Add</button>
       <button class="modal-btn-secondary" onclick="closeModal()">Cancel</button>
@@ -239,7 +239,7 @@ function tickAll(){
   var now=new Date().getTime();
   for(var i=0;i<hubData.countdowns.length;i++){
     var cd=hubData.countdowns[i];
-    var target=new Date(cd.date+"T00:00:00").getTime();
+    var target=new Date(cd.date).getTime();
     var diff=target-now;
     var dEl=document.getElementById("d-"+cd.id);
     var hEl=document.getElementById("h-"+cd.id);
@@ -348,6 +348,8 @@ function showOffline(){
   document.getElementById("trip-who").textContent="";
   document.getElementById("countdowns-container").innerHTML='<div style="font-size:12px;color:#2a4a6a;padding:12px 0 4px">Offline — countdowns unavailable</div>';
 }
+
+function goTo(url){ window.location.href=url; }
 
 loadData();
 </script>
