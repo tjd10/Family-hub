@@ -413,21 +413,19 @@ function fetchData(){
     if(xhr.status===200){
       var res=JSON.parse(xhr.responseText);
       var rec=res.record||{};
-      if(!isSaving){
-        if(rec.packing&&rec.packing.currentTrip){
-          packingData=rec.packing;
-        } else {
-          packingData=defaultPackingData();
-          pushData();
-        }
-        synced=true;
-        render();
+      if(rec.packing&&rec.packing.currentTrip){
+        packingData=rec.packing;
+      } else {
+        packingData=defaultPackingData();
+        pushData();
       }
-      setTimeout(fetchData,POLL_INTERVAL);
+      synced=true;
+      render();
     } else { fallback(); }
   };
   xhr.onerror=function(){fallback();};
   xhr.send();
+  // No polling on packing list - data is pushed on every change
 }
 
 function pushData(){
