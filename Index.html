@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Family Hub</title>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{background:#071520;font-family:Georgia,serif;color:#e0f2fe;min-height:100vh;padding-bottom:60px}
+    .header{padding:40px 20px 24px;max-width:600px;margin:0 auto}
+    .brand{font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:#38bdf8;margin-bottom:8px}
+    h1{font-size:32px;font-weight:normal;color:#f0f9ff;margin-bottom:4px}
+    .tagline{font-size:13px;color:#3d6a8a}
+    .content{max-width:600px;margin:0 auto;padding:0 20px}
+    .section-title{font-size:11px;letter-spacing:.15em;text-transform:uppercase;color:#3d6a8a;margin:28px 0 12px;display:flex;align-items:center;justify-content:space-between}
+    .section-add{font-size:18px;color:#2a4a6a;background:none;border:none;cursor:pointer;line-height:1}
+    .section-add:hover{color:#38bdf8}
+    .countdown-card{background:linear-gradient(135deg,#0c2340,#071c38);border:1px solid #1a3050;border-radius:16px;padding:20px;margin-bottom:12px}
+    .countdown-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px}
+    .countdown-name{font-size:16px;color:#f0f9ff;margin-bottom:2px}
+    .countdown-date{font-size:11px;color:#3d6a8a}
+    .countdown-delete{background:none;border:none;color:#2a4a6a;font-size:14px;cursor:pointer;padding:2px 6px}
+    .countdown-delete:hover{color:#ef4444}
+    .countdown-units{display:flex;gap:8px}
+    .countdown-unit{flex:1;background:rgba(0,0,0,0.2);border-radius:10px;padding:10px 6px;text-align:center}
+    .countdown-num{font-size:clamp(20px,5vw,32px);color:#38bdf8;line-height:1;margin-bottom:4px}
+    .countdown-label{font-size:9px;letter-spacing:.15em;text-transform:uppercase;color:#3d6a8a}
+    .countdown-departed{text-align:center;padding:16px;color:#3dd88e;font-size:14px}
+    .app-card{background:rgba(10,28,46,.7);border:1px solid #1a3050;border-radius:14px;padding:16px 20px;margin-bottom:10px;display:flex;align-items:center;gap:16px}
+    .app-card:hover{border-color:#2a5070}
+    .app-icon{width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0}
+    .app-info{flex:1}
+    .app-name{font-size:16px;color:#d0eaff;margin-bottom:2px}
+    .app-desc{font-size:12px;color:#3d6a8a}
+    .app-arrow{font-size:16px;color:#2a4a6a}
+    .app-card.soon{opacity:.4;pointer-events:none}
+    .soon-badge{font-size:10px;background:rgba(14,165,233,0.1);border:1px solid rgba(14,165,233,0.2);border-radius:4px;padding:2px 7px;color:#38bdf8;margin-left:8px;vertical-align:middle}
+    .sync-row{display:flex;align-items:center;gap:6px;margin-bottom:20px}
+    .sync-dot{width:6px;height:6px;border-radius:50%;background:#ef4444}
+    .sync-dot.live{background:#22c55e;box-shadow:0 0 6px #22c55e}
+    .sync-text{font-size:11px;color:#3d6a8a}
+    .modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:100;align-items:center;justify-content:center;padding:20px}
+    .modal-bg.open{display:flex}
+    .modal{background:#0c1e38;border:1px solid #1a3050;border-radius:16px;padding:24px;width:100%;max-width:440px}
+    .modal h2{font-size:18px;font-weight:normal;color:#f0f9ff;margin-bottom:16px}
+    .modal-input{width:100%;background:rgba(14,165,233,.08);border:1px solid #2a4a6a;border-radius:8px;padding:10px 14px;color:#e0f2fe;font-size:14px;font-family:Georgia,serif;outline:none;margin-bottom:12px}
+    .modal-input::-webkit-calendar-picker-indicator{filter:invert(0.5)}
+    .modal-btn-row{display:flex;gap:10px;margin-top:4px}
+    .modal-btn-primary{flex:1;background:rgba(14,165,233,0.2);border:1px solid rgba(14,165,233,0.4);color:#38bdf8;padding:10px;border-radius:8px;font-size:14px;font-family:Georgia,serif;cursor:pointer}
+    .modal-btn-secondary{background:transparent;border:1px solid #1a3050;color:#3d6a8a;padding:10px 16px;border-radius:8px;font-size:14px;font-family:Georgia,serif;cursor:pointer}
+    .footer{text-align:center;font-size:11px;color:#1e3a5f;margin-top:40px}
+  </style>
+</head>
+<body>
+<div class="header">
+  <div class="brand">&#128374; Family Hub</div>
+  <h1>Welcome back</h1>
+  <p class="tagline">Everything in one place</p>
+</div>
+<div class="content">
+  <div class="sync-row">
+    <div class="sync-dot" id="sync-dot"></div>
+    <div class="sync-text" id="sync-text">Connecting...</div>
+  </div>
+
+  <div class="section-title">
+    <span>&#9200; Countdowns</span>
+    <button class="section-add" onclick="openAddCountdown()">&#43;</button>
+  </div>
+  <div id="countdowns-container"></div>
+
+  <div class="section-title">Apps</div>
+
+  <a href="family-packing.html" class="app-card" style="text-decoration:none">
+    <div class="app-icon" style="background:rgba(14,165,233,0.12);border:1px solid rgba(14,165,233,0.2)">&#128230;</div>
+    <div class="app-info">
+      <div class="app-name">Packing List</div>
+      <div class="app-desc">Tim, Sarah, Paula, Zoe</div>
+    </div>
+    <div class="app-arrow">&#8250;</div>
+  </a>
+
+  <a href="departure-checklist.html" class="app-card" style="text-decoration:none">
+    <div class="app-icon" style="background:rgba(245,200,66,0.12);border:1px solid rgba(245,200,66,0.2)">&#9989;</div>
+    <div class="app-info">
+      <div class="app-name">Departure Checklist</div>
+      <div class="app-desc">Security, Kitchen, Waste, Utilities</div>
+    </div>
+    <div class="app-arrow">&#8250;</div>
+  </a>
+
+  <div class="app-card soon">
+    <div class="app-icon" style="background:rgba(251,113,133,0.12);border:1px solid rgba(251,113,133,0.2)">&#128722;</div>
+    <div class="app-info">
+      <div class="app-name">Shopping List <span class="soon-badge">Coming soon</span></div>
+      <div class="app-desc">Shared family shopping</div>
+    </div>
+    <div class="app-arrow">&#8250;</div>
+  </div>
+
+  <div class="footer">Family Hub</div>
+</div>
+
+<div class="modal-bg" id="modal-add" onclick="closeModalBg(event)">
+  <div class="modal">
+    <h2>&#43; Add Countdown</h2>
+    <input class="modal-input" id="cd-name" placeholder="Name (e.g. Lombok 2026)" type="text"/>
+    <input class="modal-input" id="cd-date" type="datetime-local"/>
+    <div class="modal-btn-row">
+      <button class="modal-btn-primary" onclick="addCountdown()">Add</button>
+      <button class="modal-btn-secondary" onclick="closeModal()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<script>
+var BIN_ID="6a020287250b1311c3356262";
+var API_KEY="$2a$10$FK5/Rnl5zxs7AFaw4fLNbO1vja7sYIviAHtMAbduI4jEuAxmIGuIK";
+var BIN_URL="https://api.jsonbin.io/v3/b/"+BIN_ID;
+var hubData=null;
+var tickTimer=null;
+
+function loadData(){
+  var xhr=new XMLHttpRequest();
+  xhr.open("GET",BIN_URL+"/latest",true);
+  xhr.setRequestHeader("X-Master-Key",API_KEY);
+  xhr.onload=function(){
+    if(xhr.status===200){
+      var rec=JSON.parse(xhr.responseText).record||{};
+      hubData=rec;
+      if(!hubData.countdowns)hubData.countdowns=[];
+      document.getElementById("sync-dot").className="sync-dot live";
+      document.getElementById("sync-text").textContent="Live";
+      renderCountdowns();
+      startTick();
+    } else { showOffline(); }
+  };
+  xhr.onerror=function(){showOffline();};
+  xhr.send();
+}
+
+function pushData(){
+  var xhr=new XMLHttpRequest();
+  xhr.open("PUT",BIN_URL,true);
+  xhr.setRequestHeader("Content-Type","application/json");
+  xhr.setRequestHeader("X-Master-Key",API_KEY);
+  xhr.send(JSON.stringify(hubData));
+}
+
+function renderCountdowns(){
+  var container=document.getElementById("countdowns-container");
+  if(!hubData||!hubData.countdowns||hubData.countdowns.length===0){
+    container.innerHTML='<div style="font-size:12px;color:#2a4a6a;padding:12px 0 4px">No countdowns yet - tap + to add one.</div>';
+    return;
+  }
+  var html="";
+  for(var i=0;i<hubData.countdowns.length;i++){
+    var cd=hubData.countdowns[i];
+    html+='<div class="countdown-card" id="cd-'+cd.id+'">'
+      +'<div class="countdown-top">'
+      +'<div><div class="countdown-name">'+cd.name+'</div><div class="countdown-date">'+cd.date.replace("T"," ")+'</div></div>'
+      +'<button class="countdown-delete" onclick="deleteCountdown(\''+cd.id+'\')">&#10005;</button>'
+      +'</div>'
+      +'<div class="countdown-units" id="units-'+cd.id+'">'
+      +'<div class="countdown-unit"><div class="countdown-num" id="d-'+cd.id+'">--</div><div class="countdown-label">Days</div></div>'
+      +'<div class="countdown-unit"><div class="countdown-num" id="h-'+cd.id+'">--</div><div class="countdown-label">Hours</div></div>'
+      +'<div class="countdown-unit"><div class="countdown-num" id="m-'+cd.id+'">--</div><div class="countdown-label">Mins</div></div>'
+      +'<div class="countdown-unit"><div class="countdown-num" id="s-'+cd.id+'">--</div><div class="countdown-label">Secs</div></div>'
+      +'</div></div>';
+  }
+  container.innerHTML=html;
+  tickAll();
+}
+
+function tickAll(){
+  if(!hubData||!hubData.countdowns)return;
+  var now=new Date().getTime();
+  for(var i=0;i<hubData.countdowns.length;i++){
+    var cd=hubData.countdowns[i];
+    var target=new Date(cd.date).getTime();
+    var diff=target-now;
+    var dEl=document.getElementById("d-"+cd.id);
+    if(!dEl)continue;
+    if(diff<=0){
+      var units=document.getElementById("units-"+cd.id);
+      if(units)units.innerHTML='<div class="countdown-departed">Departed - have a great trip!</div>';
+    } else {
+      dEl.textContent=pad(Math.floor(diff/(1000*60*60*24)));
+      document.getElementById("h-"+cd.id).textContent=pad(Math.floor((diff%(1000*60*60*24))/(1000*60*60)));
+      document.getElementById("m-"+cd.id).textContent=pad(Math.floor((diff%(1000*60*60))/(1000*60)));
+      document.getElementById("s-"+cd.id).textContent=pad(Math.floor((diff%(1000*60))/1000));
+    }
+  }
+}
+
+function pad(n){return n<10?"0"+n:""+n;}
+function startTick(){if(tickTimer)clearInterval(tickTimer);tickTimer=setInterval(tickAll,1000);}
+
+function openAddCountdown(){
+  document.getElementById("cd-name").value="";
+  document.getElementById("cd-date").value="";
+  document.getElementById("modal-add").className="modal-bg open";
+}
+function closeModal(){document.getElementById("modal-add").className="modal-bg";}
+function closeModalBg(e){if(e.target===e.currentTarget)closeModal();}
+
+function addCountdown(){
+  var name=document.getElementById("cd-name").value.trim();
+  var date=document.getElementById("cd-date").value;
+  if(!name){alert("Please enter a name");return;}
+  if(!date){alert("Please pick a date and time");return;}
+  if(!hubData.countdowns)hubData.countdowns=[];
+  hubData.countdowns.push({id:"cd_"+Date.now(),name:name,date:date});
+  hubData.countdowns.sort(function(a,b){return a.date<b.date?-1:1;});
+  closeModal();
+  pushData();
+  renderCountdowns();
+  startTick();
+}
+
+function deleteCountdown(id){
+  if(!confirm("Remove this countdown?"))return;
+  for(var i=0;i<hubData.countdowns.length;i++){
+    if(hubData.countdowns[i].id===id){hubData.countdowns.splice(i,1);break;}
+  }
+  pushData();
+  renderCountdowns();
+}
+
+function showOffline(){
+  document.getElementById("sync-dot").className="sync-dot";
+  document.getElementById("sync-text").textContent="Offline";
+  document.getElementById("countdowns-container").innerHTML='<div style="font-size:12px;color:#2a4a6a;padding:12px 0 4px">Offline - countdowns unavailable</div>';
+}
+
+loadData();
+</script>
+</body>
+</html>
