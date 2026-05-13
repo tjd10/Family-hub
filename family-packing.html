@@ -432,29 +432,37 @@ function fetchData(){
 
 function pushData(){
   isSaving=true;
-  var xhr=new XMLHttpRequest();
-  xhr.open("GET",BIN_URL+"/latest",true);
-  xhr.setRequestHeader("X-Master-Key",API_KEY);
-  xhr.onload=function(){
+  // Read current bin, merge packing data, then write back
+  var getXhr=new XMLHttpRequest();
+  getXhr.open("GET",BIN_URL+"/latest",true);
+  getXhr.setRequestHeader("X-Master-Key",API_KEY);
+  getXhr.onload=function(){
     var existing={};
-    if(xhr.status===200){try{existing=JSON.parse(xhr.responseText).record||{};}catch(e){}}
+    if(getXhr.status===200){
+      try{existing=JSON.parse(getXhr.responseText).record||{};}catch(e){}
+    }
     existing.packing=packingData;
-    var xhr2=new XMLHttpRequest();
-    xhr2.open("PUT",BIN_URL,true);
-    xhr2.setRequestHeader("Content-Type","application/json");
-    xhr2.setRequestHeader("X-Master-Key",API_KEY);
-    xhr2.onloadend=function(){isSaving=false;};
-    xhr2.send(JSON.stringify(existing));
+    var putXhr=new XMLHttpRequest();
+    putXhr.open("PUT",BIN_URL,true);
+    putXhr.setRequestHeader("Content-Type","application/json");
+    putXhr.setRequestHeader("X-Master-Key",API_KEY);
+    putXhr.onload=function(){
+      isSaving=false;
+    };
+    putXhr.onerror=function(){isSaving=false;};
+    putXhr.send(JSON.stringify(existing));
   };
-  xhr.onerror=function(){
-    var xhr2=new XMLHttpRequest();
-    xhr2.open("PUT",BIN_URL,true);
-    xhr2.setRequestHeader("Content-Type","application/json");
-    xhr2.setRequestHeader("X-Master-Key",API_KEY);
-    xhr2.onloadend=function(){isSaving=false;};
-    xhr2.send(JSON.stringify({packing:packingData}));
+  getXhr.onerror=function(){
+    // If GET fails, just write packing data directly
+    var putXhr=new XMLHttpRequest();
+    putXhr.open("PUT",BIN_URL,true);
+    putXhr.setRequestHeader("Content-Type","application/json");
+    putXhr.setRequestHeader("X-Master-Key",API_KEY);
+    putXhr.onload=function(){isSaving=false;};
+    putXhr.onerror=function(){isSaving=false;};
+    putXhr.send(JSON.stringify({packing:packingData,countdowns:[]}));
   };
-  xhr.send();
+  getXhr.send();
 }
 
 function fallback(){
@@ -467,7 +475,7 @@ function save(){
   try{localStorage.setItem(LOCAL_KEY,JSON.stringify(packingData));}catch(e){}
   render();
   if(saveTimer)clearTimeout(saveTimer);
-  saveTimer=setTimeout(pushData,500);
+  saveTimer=setTimeout(pushData,100);
 }
 
 // ── Item actions ──
