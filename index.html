@@ -4,11 +4,39 @@
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Family Hub</title>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+  <script>
+    firebase.initializeApp({
+      apiKey: "AIzaSyD2Lv-JLxB8XkDmSCbyejwJVdLrsd2G0Bg",
+      authDomain: "family-hub-cefcb.firebaseapp.com",
+      databaseURL: "https://family-hub-cefcb-default-rtdb.europe-west1.firebasedatabase.app",
+      projectId: "family-hub-cefcb",
+      storageBucket: "family-hub-cefcb.firebasestorage.app",
+      messagingSenderId: "127444767723",
+      appId: "1:127444767723:web:b9901ad035553d966fffae"
+    });
+  </script>
   <style>
     *{box-sizing:border-box;margin:0;padding:0}
     body{background:#071520;font-family:Georgia,serif;color:#e0f2fe;min-height:100vh;padding-bottom:60px}
+    /* Login screen */
+    .login-screen{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:20px}
+    .login-box{background:#0c1e38;border:1px solid #1a3050;border-radius:16px;padding:32px 24px;width:100%;max-width:380px}
+    .login-brand{font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:#38bdf8;margin-bottom:8px;text-align:center}
+    .login-title{font-size:24px;font-weight:normal;color:#f0f9ff;margin-bottom:4px;text-align:center}
+    .login-sub{font-size:13px;color:#3d6a8a;margin-bottom:24px;text-align:center}
+    .login-input{width:100%;background:rgba(14,165,233,.08);border:1px solid #2a4a6a;border-radius:8px;padding:12px 14px;color:#e0f2fe;font-size:14px;font-family:Georgia,serif;outline:none;margin-bottom:12px}
+    .login-btn{width:100%;background:rgba(14,165,233,0.2);border:1px solid rgba(14,165,233,0.4);color:#38bdf8;padding:12px;border-radius:8px;font-size:15px;font-family:Georgia,serif;cursor:pointer;margin-bottom:12px}
+    .login-btn:hover{background:rgba(14,165,233,0.3)}
+    .login-error{font-size:12px;color:#fca5a5;text-align:center;min-height:18px;margin-bottom:4px}
+    /* Main app */
+    .app-screen{display:none}
     .header{padding:40px 20px 24px;max-width:600px;margin:0 auto}
-    .brand{font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:#38bdf8;margin-bottom:8px}
+    .brand{font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:#38bdf8;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center}
+    .signout-btn{font-size:10px;color:#2a4a6a;background:none;border:none;cursor:pointer;font-family:Georgia,serif}
+    .signout-btn:hover{color:#3d6a8a}
     h1{font-size:32px;font-weight:normal;color:#f0f9ff;margin-bottom:4px}
     .tagline{font-size:13px;color:#3d6a8a}
     .content{max-width:600px;margin:0 auto;padding:0 20px}
@@ -49,58 +77,69 @@
     .modal-btn-primary{flex:1;background:rgba(14,165,233,0.2);border:1px solid rgba(14,165,233,0.4);color:#38bdf8;padding:10px;border-radius:8px;font-size:14px;font-family:Georgia,serif;cursor:pointer}
     .modal-btn-secondary{background:transparent;border:1px solid #1a3050;color:#3d6a8a;padding:10px 16px;border-radius:8px;font-size:14px;font-family:Georgia,serif;cursor:pointer}
     .footer{text-align:center;font-size:11px;color:#1e3a5f;margin-top:40px}
+    .loading{display:flex;align-items:center;justify-content:center;height:100vh;color:#7dd3fc;font-size:16px;flex-direction:column;gap:12px}
   </style>
 </head>
 <body>
-<div class="header">
-  <div class="brand">&#128374; Family Hub</div>
-  <h1>Welcome back</h1>
-  <p class="tagline">Everything in one place</p>
+<div class="loading" id="loading"><div style="font-size:28px">&#128374;</div><div>Loading...</div></div>
+<div class="login-screen" id="login-screen" style="display:none">
+  <div class="login-box">
+    <div class="login-brand">&#128374; Family Hub</div>
+    <div class="login-title">Welcome back</div>
+    <div class="login-sub">Sign in to access your family hub</div>
+    <input class="login-input" id="login-email" type="email" placeholder="Email address" autocomplete="email"/>
+    <input class="login-input" id="login-password" type="password" placeholder="Password" autocomplete="current-password"/>
+    <div class="login-error" id="login-error"></div>
+    <button class="login-btn" onclick="signIn()">Sign In</button>
+  </div>
 </div>
-<div class="content">
-  <div class="sync-row">
-    <div class="sync-dot" id="sync-dot"></div>
-    <div class="sync-text" id="sync-text">Connecting...</div>
-  </div>
-
-  <div class="section-title">
-    <span>&#9200; Countdowns</span>
-    <button class="section-add" onclick="openAddCountdown()">&#43;</button>
-  </div>
-  <div id="countdowns-container"></div>
-
-  <div class="section-title">Apps</div>
-
-  <a href="family-packing.html" class="app-card" style="text-decoration:none">
-    <div class="app-icon" style="background:rgba(14,165,233,0.12);border:1px solid rgba(14,165,233,0.2)">&#128230;</div>
-    <div class="app-info">
-      <div class="app-name">Packing List</div>
-      <div class="app-desc">Tim, Sarah, Paula, Zoe</div>
+<div class="app-screen" id="app-screen">
+  <div class="header">
+    <div class="brand">
+      <span>&#128374; Family Hub</span>
+      <button class="signout-btn" onclick="signOut()">Sign out</button>
     </div>
-    <div class="app-arrow">&#8250;</div>
-  </a>
-
-  <a href="departure-checklist.html" class="app-card" style="text-decoration:none">
-    <div class="app-icon" style="background:rgba(245,200,66,0.12);border:1px solid rgba(245,200,66,0.2)">&#9989;</div>
-    <div class="app-info">
-      <div class="app-name">Departure Checklist</div>
-      <div class="app-desc">Security, Kitchen, Waste, Utilities</div>
-    </div>
-    <div class="app-arrow">&#8250;</div>
-  </a>
-
-  <div class="app-card soon">
-    <div class="app-icon" style="background:rgba(251,113,133,0.12);border:1px solid rgba(251,113,133,0.2)">&#128722;</div>
-    <div class="app-info">
-      <div class="app-name">Shopping List <span class="soon-badge">Coming soon</span></div>
-      <div class="app-desc">Shared family shopping</div>
-    </div>
-    <div class="app-arrow">&#8250;</div>
+    <h1>Welcome back</h1>
+    <p class="tagline">Everything in one place</p>
   </div>
-
-  <div class="footer">Family Hub</div>
+  <div class="content">
+    <div class="sync-row">
+      <div class="sync-dot live" id="sync-dot"></div>
+      <div class="sync-text" id="sync-text">Live</div>
+    </div>
+    <div class="section-title">
+      <span>&#9200; Countdowns</span>
+      <button class="section-add" onclick="openAddCountdown()">&#43;</button>
+    </div>
+    <div id="countdowns-container"></div>
+    <div class="section-title">Apps</div>
+    <a href="family-packing.html" class="app-card" style="text-decoration:none">
+      <div class="app-icon" style="background:rgba(14,165,233,0.12);border:1px solid rgba(14,165,233,0.2)">&#128230;</div>
+      <div class="app-info">
+        <div class="app-name">Packing List</div>
+        <div class="app-desc">Tim, Sarah, Paula, Zoe</div>
+      </div>
+      <div class="app-arrow">&#8250;</div>
+    </a>
+    <a href="departure-checklist.html" class="app-card" style="text-decoration:none">
+      <div class="app-icon" style="background:rgba(245,200,66,0.12);border:1px solid rgba(245,200,66,0.2)">&#9989;</div>
+      <div class="app-info">
+        <div class="app-name">Departure Checklist</div>
+        <div class="app-desc">Security, Kitchen, Waste, Utilities</div>
+      </div>
+      <div class="app-arrow">&#8250;</div>
+    </a>
+    <div class="app-card soon">
+      <div class="app-icon" style="background:rgba(251,113,133,0.12);border:1px solid rgba(251,113,133,0.2)">&#128722;</div>
+      <div class="app-info">
+        <div class="app-name">Shopping List <span class="soon-badge">Coming soon</span></div>
+        <div class="app-desc">Shared family shopping</div>
+      </div>
+      <div class="app-arrow">&#8250;</div>
+    </div>
+    <div class="footer">Family Hub</div>
+  </div>
 </div>
-
 <div class="modal-bg" id="modal-add" onclick="closeModalBg(event)">
   <div class="modal">
     <h2>&#43; Add Countdown</h2>
@@ -112,68 +151,72 @@
     </div>
   </div>
 </div>
-
 <script>
-var BIN_ID="6a04c85cadc21f119a96971b";
-var API_KEY="$2a$10$FK5/Rnl5zxs7AFaw4fLNbO1vja7sYIviAHtMAbduI4jEuAxmIGuIK";
-var BIN_URL="https://api.jsonbin.io/v3/b/"+BIN_ID;
-var hubData=null;
+var auth=firebase.auth();
+var db=firebase.database();
 var tickTimer=null;
+var countdownsRef=db.ref("hub/countdowns");
 
-function loadData(){
-  var xhr=new XMLHttpRequest();
-  xhr.open("GET",BIN_URL+"/latest",true);
-  xhr.setRequestHeader("X-Master-Key",API_KEY);
-  xhr.onload=function(){
-    if(xhr.status===200){
-      var rec=JSON.parse(xhr.responseText).record||{};
-      hubData=rec;
-      if(!hubData.countdowns)hubData.countdowns=[];
-      document.getElementById("sync-dot").className="sync-dot live";
-      document.getElementById("sync-text").textContent="Live";
-      renderCountdowns();
-      startTick();
-    } else { showOffline(); }
-  };
-  xhr.onerror=function(){showOffline();};
-  xhr.send();
+// Auth state listener
+auth.onAuthStateChanged(function(user){
+  document.getElementById("loading").style.display="none";
+  if(user){
+    document.getElementById("login-screen").style.display="none";
+    document.getElementById("app-screen").style.display="block";
+    startListening();
+  } else {
+    document.getElementById("login-screen").style.display="flex";
+    document.getElementById("app-screen").style.display="none";
+    if(tickTimer)clearInterval(tickTimer);
+  }
+});
+
+function signIn(){
+  var email=document.getElementById("login-email").value.trim();
+  var password=document.getElementById("login-password").value;
+  var errEl=document.getElementById("login-error");
+  errEl.textContent="";
+  if(!email||!password){errEl.textContent="Please enter your email and password.";return;}
+  auth.signInWithEmailAndPassword(email,password).catch(function(err){
+    errEl.textContent="Incorrect email or password. Please try again.";
+  });
 }
 
-function pushData(){
-  // Read first, then merge countdowns in, then write back
-  // This prevents wiping out packing list data
-  var getXhr=new XMLHttpRequest();
-  getXhr.open("GET",BIN_URL+"/latest",true);
-  getXhr.setRequestHeader("X-Master-Key",API_KEY);
-  getXhr.onload=function(){
-    var existing={};
-    if(getXhr.status===200){try{existing=JSON.parse(getXhr.responseText).record||{};}catch(e){}}
-    existing.countdowns=hubData.countdowns;
-    var putXhr=new XMLHttpRequest();
-    putXhr.open("PUT",BIN_URL,true);
-    putXhr.setRequestHeader("Content-Type","application/json");
-    putXhr.setRequestHeader("X-Master-Key",API_KEY);
-    putXhr.send(JSON.stringify(existing));
-  };
-  getXhr.onerror=function(){
-    var putXhr=new XMLHttpRequest();
-    putXhr.open("PUT",BIN_URL,true);
-    putXhr.setRequestHeader("Content-Type","application/json");
-    putXhr.setRequestHeader("X-Master-Key",API_KEY);
-    putXhr.send(JSON.stringify(hubData));
-  };
-  getXhr.send();
+function signOut(){
+  if(confirm("Sign out of Family Hub?")){auth.signOut();}
 }
 
-function renderCountdowns(){
+// Allow Enter key on password field
+document.getElementById("login-password").addEventListener("keydown",function(e){
+  if(e.key==="Enter")signIn();
+});
+
+function startListening(){
+  countdownsRef.on("value",function(snap){
+    var data=snap.val()||[];
+    // Convert object to array if needed
+    var countdowns=[];
+    if(Array.isArray(data)){
+      countdowns=data;
+    } else {
+      for(var k in data)countdowns.push(data[k]);
+      countdowns.sort(function(a,b){return a.date<b.date?-1:1;});
+    }
+    renderCountdowns(countdowns);
+    if(tickTimer)clearInterval(tickTimer);
+    tickTimer=setInterval(function(){tickAll(countdowns);},1000);
+  });
+}
+
+function renderCountdowns(countdowns){
   var container=document.getElementById("countdowns-container");
-  if(!hubData||!hubData.countdowns||hubData.countdowns.length===0){
+  if(!countdowns||countdowns.length===0){
     container.innerHTML='<div style="font-size:12px;color:#2a4a6a;padding:12px 0 4px">No countdowns yet - tap + to add one.</div>';
     return;
   }
   var html="";
-  for(var i=0;i<hubData.countdowns.length;i++){
-    var cd=hubData.countdowns[i];
+  for(var i=0;i<countdowns.length;i++){
+    var cd=countdowns[i];
     html+='<div class="countdown-card" id="cd-'+cd.id+'">'
       +'<div class="countdown-top">'
       +'<div><div class="countdown-name">'+cd.name+'</div><div class="countdown-date">'+cd.date.replace("T"," ")+'</div></div>'
@@ -187,14 +230,14 @@ function renderCountdowns(){
       +'</div></div>';
   }
   container.innerHTML=html;
-  tickAll();
+  tickAll(countdowns);
 }
 
-function tickAll(){
-  if(!hubData||!hubData.countdowns)return;
+function tickAll(countdowns){
+  if(!countdowns)return;
   var now=new Date().getTime();
-  for(var i=0;i<hubData.countdowns.length;i++){
-    var cd=hubData.countdowns[i];
+  for(var i=0;i<countdowns.length;i++){
+    var cd=countdowns[i];
     var target=new Date(cd.date).getTime();
     var diff=target-now;
     var dEl=document.getElementById("d-"+cd.id);
@@ -212,7 +255,6 @@ function tickAll(){
 }
 
 function pad(n){return n<10?"0"+n:""+n;}
-function startTick(){if(tickTimer)clearInterval(tickTimer);tickTimer=setInterval(tickAll,1000);}
 
 function openAddCountdown(){
   document.getElementById("cd-name").value="";
@@ -227,31 +269,15 @@ function addCountdown(){
   var date=document.getElementById("cd-date").value;
   if(!name){alert("Please enter a name");return;}
   if(!date){alert("Please pick a date and time");return;}
-  if(!hubData.countdowns)hubData.countdowns=[];
-  hubData.countdowns.push({id:"cd_"+Date.now(),name:name,date:date});
-  hubData.countdowns.sort(function(a,b){return a.date<b.date?-1:1;});
+  var newRef=countdownsRef.push();
+  newRef.set({id:newRef.key,name:name,date:date});
   closeModal();
-  pushData();
-  renderCountdowns();
-  startTick();
 }
 
 function deleteCountdown(id){
   if(!confirm("Remove this countdown?"))return;
-  for(var i=0;i<hubData.countdowns.length;i++){
-    if(hubData.countdowns[i].id===id){hubData.countdowns.splice(i,1);break;}
-  }
-  pushData();
-  renderCountdowns();
+  countdownsRef.child(id).remove();
 }
-
-function showOffline(){
-  document.getElementById("sync-dot").className="sync-dot";
-  document.getElementById("sync-text").textContent="Offline";
-  document.getElementById("countdowns-container").innerHTML='<div style="font-size:12px;color:#2a4a6a;padding:12px 0 4px">Offline - countdowns unavailable</div>';
-}
-
-loadData();
 </script>
 </body>
 </html>
