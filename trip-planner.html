@@ -1,0 +1,1436 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
+  <title>Family Hub — Trip Planner</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --bg: #071520;
+      --bg2: #0a1e30;
+      --card: rgba(10,28,46,0.8);
+      --border: #1a3050;
+      --border2: #152840;
+      --accent: #38bdf8;
+      --accent2: #0ea5e9;
+      --text: #e0f2fe;
+      --text2: #d0eaff;
+      --muted: #3d6a8a;
+      --muted2: #2a5070;
+      --pink: #fb7185;
+      --green: #86efac;
+      --yellow: #fde047;
+      --amber: #fbbf24;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    html, body { height: 100%; }
+    body {
+      background: var(--bg);
+      font-family: 'DM Sans', sans-serif;
+      color: var(--text);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* Background texture */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background:
+        radial-gradient(ellipse at 20% 20%, rgba(14,165,233,0.06) 0%, transparent 60%),
+        radial-gradient(ellipse at 80% 80%, rgba(251,113,133,0.04) 0%, transparent 60%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ── SCREENS ── */
+    .screen { display: none; min-height: 100vh; position: relative; z-index: 1; }
+    .screen.active { display: block; }
+
+    /* ── HEADER ── */
+    .app-header {
+      padding: 20px 20px 0;
+      max-width: 680px;
+      margin: 0 auto;
+    }
+    .brand {
+      font-size: 10px;
+      letter-spacing: .25em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 4px;
+    }
+    .page-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 32px;
+      font-weight: 300;
+      color: #f0f9ff;
+      letter-spacing: -0.5px;
+    }
+    .page-subtitle {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 4px;
+    }
+
+    /* ── BACK BUTTON ── */
+    .back-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      color: var(--accent);
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 0;
+      margin-bottom: 16px;
+      letter-spacing: .05em;
+    }
+    .back-btn:hover { opacity: 0.7; }
+
+    /* ── CONTENT ── */
+    .content {
+      max-width: 680px;
+      margin: 0 auto;
+      padding: 24px 20px 80px;
+    }
+
+    /* ── CARDS ── */
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      overflow: hidden;
+      margin-bottom: 10px;
+      backdrop-filter: blur(10px);
+      transition: border-color 0.2s;
+    }
+    .card:hover { border-color: var(--muted2); }
+
+    /* ── TRIP CARDS ── */
+    .trip-card {
+      padding: 18px 20px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      transition: background 0.2s;
+    }
+    .trip-card:hover { background: rgba(14,165,233,0.05); }
+    .trip-icon {
+      width: 46px;
+      height: 46px;
+      border-radius: 12px;
+      background: rgba(14,165,233,0.12);
+      border: 1px solid rgba(14,165,233,0.2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      flex-shrink: 0;
+    }
+    .trip-info { flex: 1; min-width: 0; }
+    .trip-name {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 20px;
+      font-weight: 500;
+      color: var(--text2);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .trip-dates { font-size: 12px; color: var(--muted); margin-top: 3px; }
+    .trip-count {
+      font-size: 11px;
+      color: var(--muted);
+      background: rgba(14,165,233,0.08);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 3px 8px;
+      flex-shrink: 0;
+    }
+    .trip-arrow { color: var(--muted); font-size: 18px; flex-shrink: 0; }
+
+    /* ── ADD TRIP BUTTON ── */
+    .add-btn {
+      width: 100%;
+      padding: 16px;
+      background: rgba(14,165,233,0.08);
+      border: 1px dashed rgba(14,165,233,0.3);
+      border-radius: 14px;
+      color: var(--accent);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 14px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: all 0.2s;
+      margin-bottom: 10px;
+    }
+    .add-btn:hover {
+      background: rgba(14,165,233,0.14);
+      border-color: rgba(14,165,233,0.5);
+    }
+
+    /* ── SECTION TITLE ── */
+    .section-label {
+      font-size: 10px;
+      letter-spacing: .2em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 12px;
+      margin-top: 28px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--border);
+    }
+    .section-label:first-child { margin-top: 0; }
+
+    /* ── DAY BLOCKS ── */
+    .day-block { margin-bottom: 24px; }
+    .day-header {
+      font-size: 11px;
+      letter-spacing: .15em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .day-header::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+
+    /* ── SEGMENT CARDS ── */
+    .segment-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 14px 16px;
+      margin-bottom: 8px;
+      cursor: pointer;
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      transition: all 0.2s;
+      backdrop-filter: blur(10px);
+    }
+    .segment-card:hover {
+      border-color: var(--muted2);
+      background: rgba(10,28,46,0.95);
+    }
+    .seg-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 9px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      flex-shrink: 0;
+    }
+    .seg-icon.flight { background: rgba(14,165,233,0.12); border: 1px solid rgba(14,165,233,0.2); }
+    .seg-icon.accommodation { background: rgba(251,113,133,0.12); border: 1px solid rgba(251,113,133,0.2); }
+    .seg-icon.transfer { background: rgba(251,191,36,0.12); border: 1px solid rgba(251,191,36,0.2); }
+    .seg-icon.experience { background: rgba(134,239,172,0.12); border: 1px solid rgba(134,239,172,0.2); }
+    .seg-icon.meal { background: rgba(251,113,133,0.12); border: 1px solid rgba(251,113,133,0.2); }
+    .seg-icon.admin { background: rgba(61,106,138,0.2); border: 1px solid rgba(61,106,138,0.3); }
+    .seg-body { flex: 1; min-width: 0; }
+    .seg-title {
+      font-size: 14px;
+      color: var(--text2);
+      font-weight: 500;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .seg-sub { font-size: 12px; color: var(--muted); margin-top: 2px; }
+    .seg-time {
+      font-size: 11px;
+      color: var(--muted);
+      flex-shrink: 0;
+      text-align: right;
+    }
+
+    /* Stay block */
+    .stay-block {
+      background: rgba(251,113,133,0.06);
+      border: 1px solid rgba(251,113,133,0.15);
+      border-radius: 12px;
+      padding: 12px 16px;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .stay-block .seg-icon { background: rgba(251,113,133,0.1); border: 1px solid rgba(251,113,133,0.2); }
+    .stay-text { font-size: 13px; color: var(--muted); font-style: italic; }
+
+    /* ── EMPTY STATE ── */
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+    }
+    .empty-icon { font-size: 48px; margin-bottom: 16px; opacity: 0.4; }
+    .empty-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 22px;
+      color: var(--text2);
+      margin-bottom: 8px;
+      font-weight: 400;
+    }
+    .empty-sub { font-size: 13px; color: var(--muted); line-height: 1.6; }
+
+    /* ── DETAIL SCREEN ── */
+    .detail-hero {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 20px;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    .detail-hero-icon {
+      width: 56px;
+      height: 56px;
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      flex-shrink: 0;
+    }
+    .detail-hero-text {}
+    .detail-type {
+      font-size: 10px;
+      letter-spacing: .2em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 4px;
+    }
+    .detail-name {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 26px;
+      font-weight: 500;
+      color: #f0f9ff;
+      line-height: 1.2;
+    }
+
+    .detail-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      overflow: hidden;
+      margin-bottom: 10px;
+    }
+    .detail-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 13px 16px;
+      border-top: 1px solid var(--border2);
+    }
+    .detail-row:first-child { border-top: none; }
+    .detail-label {
+      font-size: 11px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      width: 100px;
+      flex-shrink: 0;
+      padding-top: 1px;
+    }
+    .detail-value {
+      font-size: 14px;
+      color: var(--text2);
+      flex: 1;
+      line-height: 1.5;
+    }
+    .detail-value a {
+      color: var(--accent);
+      text-decoration: none;
+    }
+    .detail-value a:hover { text-decoration: underline; }
+
+    /* ── NOTES AREA ── */
+    .notes-area {
+      width: 100%;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 14px 16px;
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 14px;
+      resize: none;
+      min-height: 80px;
+      outline: none;
+      margin-bottom: 10px;
+      transition: border-color 0.2s;
+    }
+    .notes-area:focus { border-color: var(--accent); }
+    .notes-area::placeholder { color: var(--muted); }
+
+    /* ── PDF BUTTON ── */
+    .pdf-btn {
+      width: 100%;
+      padding: 15px;
+      background: rgba(14,165,233,0.08);
+      border: 1px solid rgba(14,165,233,0.25);
+      border-radius: 12px;
+      color: var(--accent);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 14px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: all 0.2s;
+      margin-bottom: 10px;
+    }
+    .pdf-btn:hover { background: rgba(14,165,233,0.14); border-color: rgba(14,165,233,0.4); }
+    .pdf-btn.no-pdf { opacity: 0.4; cursor: default; }
+    .pdf-btn.no-pdf:hover { background: rgba(14,165,233,0.08); border-color: rgba(14,165,233,0.25); }
+
+    /* ── EDITOR CONTROLS ── */
+    .editor-bar {
+      display: none;
+      background: rgba(14,165,233,0.06);
+      border: 1px solid rgba(14,165,233,0.15);
+      border-radius: 12px;
+      padding: 12px 16px;
+      margin-bottom: 16px;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .editor-bar.visible { display: flex; }
+    .editor-label { font-size: 12px; color: var(--accent); }
+    .editor-actions { display: flex; gap: 8px; }
+
+    .btn-sm {
+      padding: 7px 14px;
+      border-radius: 8px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 12px;
+      cursor: pointer;
+      border: none;
+      transition: all 0.2s;
+    }
+    .btn-primary {
+      background: var(--accent);
+      color: #071520;
+      font-weight: 500;
+    }
+    .btn-primary:hover { background: var(--accent2); }
+    .btn-danger {
+      background: rgba(251,113,133,0.15);
+      border: 1px solid rgba(251,113,133,0.3);
+      color: var(--pink);
+    }
+    .btn-danger:hover { background: rgba(251,113,133,0.25); }
+    .btn-ghost {
+      background: rgba(255,255,255,0.05);
+      border: 1px solid var(--border);
+      color: var(--muted);
+    }
+    .btn-ghost:hover { background: rgba(255,255,255,0.1); }
+
+    /* ── MODAL ── */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(7,21,32,0.85);
+      backdrop-filter: blur(8px);
+      z-index: 100;
+      align-items: flex-end;
+      justify-content: center;
+    }
+    .modal-overlay.open { display: flex; }
+    .modal {
+      background: #0d2035;
+      border: 1px solid var(--border);
+      border-radius: 20px 20px 0 0;
+      width: 100%;
+      max-width: 680px;
+      max-height: 90vh;
+      overflow-y: auto;
+      padding: 24px 20px 40px;
+      animation: slideUp 0.25s ease;
+    }
+    @keyframes slideUp {
+      from { transform: translateY(100%); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+    .modal-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 22px;
+      font-weight: 500;
+      color: #f0f9ff;
+      margin-bottom: 20px;
+    }
+    .modal-close {
+      float: right;
+      background: none;
+      border: none;
+      color: var(--muted);
+      font-size: 22px;
+      cursor: pointer;
+      line-height: 1;
+      padding: 0;
+      margin-top: -2px;
+    }
+
+    /* ── FORM FIELDS ── */
+    .field { margin-bottom: 14px; }
+    .field label {
+      display: block;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: .1em;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+    .field input, .field select, .field textarea {
+      width: 100%;
+      background: rgba(10,28,46,0.8);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 11px 14px;
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 14px;
+      outline: none;
+      transition: border-color 0.2s;
+      -webkit-appearance: none;
+    }
+    .field input:focus, .field select:focus, .field textarea:focus {
+      border-color: var(--accent);
+    }
+    .field select option { background: #0d2035; }
+    .field textarea { resize: none; min-height: 70px; }
+
+    .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+    /* ── UPLOAD AREA ── */
+    .upload-area {
+      border: 1px dashed rgba(14,165,233,0.3);
+      border-radius: 12px;
+      padding: 24px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s;
+      background: rgba(14,165,233,0.04);
+      margin-bottom: 14px;
+    }
+    .upload-area:hover { border-color: var(--accent); background: rgba(14,165,233,0.08); }
+    .upload-area.has-file { border-color: var(--green); background: rgba(134,239,172,0.06); }
+    .upload-icon { font-size: 28px; margin-bottom: 8px; }
+    .upload-text { font-size: 13px; color: var(--muted); }
+    .upload-filename { font-size: 13px; color: var(--green); margin-top: 4px; }
+    #pdf-file-input { display: none; }
+
+    /* ── PROCESSING STATE ── */
+    .processing {
+      display: none;
+      text-align: center;
+      padding: 20px;
+    }
+    .processing.visible { display: block; }
+    .spinner {
+      width: 32px;
+      height: 32px;
+      border: 2px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin: 0 auto 12px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .processing-text { font-size: 13px; color: var(--muted); }
+
+    /* ── MODE BADGE ── */
+    .mode-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 10px;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      padding: 4px 10px;
+      border-radius: 6px;
+      margin-left: 10px;
+      vertical-align: middle;
+    }
+    .mode-editor {
+      background: rgba(14,165,233,0.12);
+      border: 1px solid rgba(14,165,233,0.25);
+      color: var(--accent);
+    }
+    .mode-viewer {
+      background: rgba(134,239,172,0.1);
+      border: 1px solid rgba(134,239,172,0.2);
+      color: var(--green);
+    }
+
+    /* ── FAB (Floating Action Button) ── */
+    .fab {
+      display: none;
+      position: fixed;
+      bottom: 28px;
+      right: 20px;
+      width: 54px;
+      height: 54px;
+      background: var(--accent);
+      border: none;
+      border-radius: 50%;
+      color: #071520;
+      font-size: 24px;
+      cursor: pointer;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 20px rgba(14,165,233,0.4);
+      transition: all 0.2s;
+      z-index: 50;
+    }
+    .fab:hover { background: var(--accent2); transform: scale(1.05); }
+    .fab.visible { display: flex; }
+
+    /* ── TOAST ── */
+    .toast {
+      position: fixed;
+      bottom: 90px;
+      left: 50%;
+      transform: translateX(-50%) translateY(20px);
+      background: #0d2035;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px 18px;
+      font-size: 13px;
+      color: var(--text2);
+      opacity: 0;
+      transition: all 0.3s;
+      z-index: 200;
+      white-space: nowrap;
+    }
+    .toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    /* ── DELETE CONFIRM ── */
+    .confirm-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(7,21,32,0.85);
+      backdrop-filter: blur(8px);
+      z-index: 150;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .confirm-overlay.open { display: flex; }
+    .confirm-box {
+      background: #0d2035;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 24px;
+      width: 100%;
+      max-width: 340px;
+      text-align: center;
+    }
+    .confirm-title { font-size: 16px; color: var(--text2); margin-bottom: 8px; font-weight: 500; }
+    .confirm-sub { font-size: 13px; color: var(--muted); margin-bottom: 20px; line-height: 1.5; }
+    .confirm-actions { display: flex; gap: 10px; }
+    .confirm-actions .btn-sm { flex: 1; padding: 12px; }
+
+    /* ── SCROLLBAR ── */
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+  </style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- SCREEN 1: MY TRIPS                          -->
+<!-- ═══════════════════════════════════════════ -->
+<div id="screen-trips" class="screen active">
+  <div class="app-header">
+    <div class="brand">🕶️ Family Hub</div>
+    <div style="display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;">
+      <h1 class="page-title">My Trips</h1>
+      <span id="trips-mode-badge" class="mode-badge"></span>
+    </div>
+    <p class="page-subtitle">Your family travel plans</p>
+  </div>
+  <div class="content">
+    <div id="trips-editor-bar" class="editor-bar">
+      <span class="editor-label">✏️ Editor mode — only you can see this bar</span>
+    </div>
+    <div id="trips-list"></div>
+    <div id="trips-empty" class="empty-state" style="display:none;">
+      <div class="empty-icon">✈️</div>
+      <div class="empty-title">No trips yet</div>
+      <div class="empty-sub">Tap the + button to create your first trip</div>
+    </div>
+  </div>
+  <button id="fab-new-trip" class="fab" title="New trip">+</button>
+</div>
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- SCREEN 2: TRIP OVERVIEW                     -->
+<!-- ═══════════════════════════════════════════ -->
+<div id="screen-overview" class="screen">
+  <div class="app-header">
+    <div class="content" style="padding-bottom:0;">
+      <button class="back-btn" onclick="showTrips()">← My Trips</button>
+    </div>
+    <div style="padding:0 20px;">
+      <div class="brand">🕶️ Family Hub</div>
+      <div style="display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;">
+        <h1 class="page-title" id="overview-title">Trip</h1>
+        <span id="overview-mode-badge" class="mode-badge"></span>
+      </div>
+      <p class="page-subtitle" id="overview-dates"></p>
+    </div>
+  </div>
+  <div class="content">
+    <div id="overview-editor-bar" class="editor-bar">
+      <span class="editor-label">✏️ Editor mode</span>
+      <div class="editor-actions">
+        <button class="btn-sm btn-danger" onclick="confirmDeleteTrip()">Delete trip</button>
+      </div>
+    </div>
+    <div id="overview-timeline"></div>
+    <div id="overview-empty" class="empty-state" style="display:none;">
+      <div class="empty-icon">📋</div>
+      <div class="empty-title">No segments yet</div>
+      <div class="empty-sub">Tap + to import a booking PDF and add your first segment</div>
+    </div>
+  </div>
+  <button id="fab-new-segment" class="fab" title="Add segment">+</button>
+</div>
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- SCREEN 3: SEGMENT DETAIL                    -->
+<!-- ═══════════════════════════════════════════ -->
+<div id="screen-detail" class="screen">
+  <div class="app-header">
+    <div class="content" style="padding-bottom:0;">
+      <button class="back-btn" id="detail-back-btn">← Back</button>
+    </div>
+    <div style="padding:0 20px;">
+      <div class="brand">🕶️ Family Hub</div>
+    </div>
+  </div>
+  <div class="content">
+    <div id="detail-editor-bar" class="editor-bar">
+      <span class="editor-label">✏️ Editor mode</span>
+      <div class="editor-actions">
+        <button class="btn-sm btn-danger" onclick="confirmDeleteSegment()">Delete</button>
+      </div>
+    </div>
+    <div id="detail-hero" class="detail-hero"></div>
+    <div id="detail-fields" class="detail-card"></div>
+    <div id="detail-notes-section" style="display:none;">
+      <div class="section-label">Notes</div>
+      <textarea id="detail-notes" class="notes-area" placeholder="Add notes here..." oninput="saveNotes()"></textarea>
+    </div>
+    <div id="detail-notes-view" style="display:none;">
+      <div class="section-label">Notes</div>
+      <div class="detail-card">
+        <div class="detail-row">
+          <div class="detail-value" id="detail-notes-text" style="color:var(--muted);font-style:italic;"></div>
+        </div>
+      </div>
+    </div>
+    <button id="pdf-btn" class="pdf-btn" onclick="openPdf()">
+      📄 View original document
+    </button>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- MODAL: NEW TRIP                             -->
+<!-- ═══════════════════════════════════════════ -->
+<div id="modal-new-trip" class="modal-overlay">
+  <div class="modal">
+    <div class="modal-title">
+      New Trip
+      <button class="modal-close" onclick="closeModal('modal-new-trip')">×</button>
+    </div>
+    <div class="field">
+      <label>Trip name</label>
+      <input type="text" id="trip-name-input" placeholder="e.g. Chicago Summer 2026"/>
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label>Start date</label>
+        <input type="date" id="trip-start-input"/>
+      </div>
+      <div class="field">
+        <label>End date</label>
+        <input type="date" id="trip-end-input"/>
+      </div>
+    </div>
+    <div class="field">
+      <label>Destination</label>
+      <input type="text" id="trip-dest-input" placeholder="e.g. Chicago, USA"/>
+    </div>
+    <button class="btn-sm btn-primary" style="width:100%;padding:14px;font-size:14px;" onclick="createTrip()">
+      Create Trip
+    </button>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- MODAL: ADD SEGMENT                          -->
+<!-- ═══════════════════════════════════════════ -->
+<div id="modal-add-segment" class="modal-overlay">
+  <div class="modal">
+    <div class="modal-title">
+      Add Segment
+      <button class="modal-close" onclick="closeModal('modal-add-segment')">×</button>
+    </div>
+
+    <!-- Step 1: Upload -->
+    <div id="seg-step-upload">
+      <p style="font-size:13px;color:var(--muted);margin-bottom:16px;line-height:1.6;">
+        Upload a booking confirmation PDF. Claude will read it and extract the details automatically.
+      </p>
+      <div class="upload-area" id="upload-area" onclick="document.getElementById('pdf-file-input').click()">
+        <div class="upload-icon">📄</div>
+        <div class="upload-text">Tap to select a PDF</div>
+        <div class="upload-filename" id="upload-filename"></div>
+      </div>
+      <input type="file" id="pdf-file-input" accept=".pdf" onchange="handleFileSelect(event)"/>
+
+      <div class="processing" id="processing-state">
+        <div class="spinner"></div>
+        <div class="processing-text">Claude is reading your document…</div>
+      </div>
+    </div>
+
+    <!-- Step 2: Review extracted data -->
+    <div id="seg-step-review" style="display:none;">
+      <p style="font-size:13px;color:var(--accent);margin-bottom:16px;">
+        ✓ Details extracted — please review and correct if needed
+      </p>
+      <div class="field">
+        <label>Segment type</label>
+        <select id="seg-type">
+          <option value="Flight">✈️ Flight</option>
+          <option value="Accommodation">🏨 Accommodation</option>
+          <option value="Transfer">🚗 Transfer</option>
+          <option value="Experience">🎭 Experience</option>
+          <option value="Meal">🍽️ Meal</option>
+          <option value="Admin">📋 Admin</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Title / main name</label>
+        <input type="text" id="seg-title-input" placeholder="e.g. BA297 London to Chicago"/>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label>Start date &amp; time</label>
+          <input type="datetime-local" id="seg-start-input"/>
+        </div>
+        <div class="field">
+          <label>End date &amp; time</label>
+          <input type="datetime-local" id="seg-end-input"/>
+        </div>
+      </div>
+      <div class="field">
+        <label>Details (extracted data)</label>
+        <textarea id="seg-details-input" rows="6" placeholder="Key details from the booking..."></textarea>
+      </div>
+      <div style="display:flex;gap:10px;">
+        <button class="btn-sm btn-ghost" style="flex:1;padding:13px;" onclick="resetSegmentModal()">← Back</button>
+        <button class="btn-sm btn-primary" style="flex:2;padding:13px;font-size:14px;" onclick="saveSegment()">Save Segment</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- CONFIRM DELETE                              -->
+<!-- ═══════════════════════════════════════════ -->
+<div id="confirm-overlay" class="confirm-overlay">
+  <div class="confirm-box">
+    <div class="confirm-title" id="confirm-title">Are you sure?</div>
+    <div class="confirm-sub" id="confirm-sub">This cannot be undone.</div>
+    <div class="confirm-actions">
+      <button class="btn-sm btn-ghost" onclick="closeConfirm()">Cancel</button>
+      <button class="btn-sm btn-danger" id="confirm-ok-btn">Delete</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- TOAST                                       -->
+<!-- ═══════════════════════════════════════════ -->
+<div id="toast" class="toast"></div>
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- FIREBASE + APP LOGIC                        -->
+<!-- ═══════════════════════════════════════════ -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+  import { getDatabase, ref, set, get, push, remove, onValue } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+  import { getStorage, ref as sRef, uploadBytes, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js";
+
+  // ── FIREBASE CONFIG ──
+  const firebaseConfig = {
+    apiKey: "AIzaSyD2Lv-JLxB8XkDmSCbyejwJVdLrsd2G0Bg",
+    authDomain: "family-hub-cefcb.firebaseapp.com",
+    databaseURL: "https://family-hub-cefcb-default-rtdb.europe-west1.firebasedatabase.app",
+    projectId: "family-hub-cefcb",
+    storageBucket: "family-hub-cefcb.firebasestorage.app",
+    messagingSenderId: "127444767723",
+    appId: "1:127444767723:web:275384deee263b1b6fffae"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getDatabase(app);
+  const storage = getStorage(app);
+
+  // ── MODE: editor or viewer ──
+  // Editor link has ?mode=edit in the URL
+  const isEditor = new URLSearchParams(window.location.search).get('mode') === 'edit';
+
+  // ── STATE ──
+  let currentTripId = null;
+  let currentSegmentId = null;
+  let selectedFile = null;
+  let extractedData = null;
+  let allTrips = {};
+  let confirmCallback = null;
+
+  // ── SEGMENT ICONS & TYPES ──
+  const ICONS = {
+    Flight: '✈️', Accommodation: '🏨', Transfer: '🚗',
+    Experience: '🎭', Meal: '🍽️', Admin: '📋'
+  };
+  const ICON_CLASS = {
+    Flight: 'flight', Accommodation: 'accommodation', Transfer: 'transfer',
+    Experience: 'experience', Meal: 'meal', Admin: 'admin'
+  };
+
+  // ── INIT ──
+  function init() {
+    // Set mode badges
+    const badge = isEditor
+      ? '<span class="mode-badge mode-editor">✏️ Editor</span>'
+      : '<span class="mode-badge mode-viewer">👁 View only</span>';
+    document.getElementById('trips-mode-badge').outerHTML = badge;
+
+    if (isEditor) {
+      document.getElementById('trips-editor-bar').classList.add('visible');
+      document.getElementById('fab-new-trip').classList.add('visible');
+    }
+    loadTrips();
+  }
+
+  // ── LOAD TRIPS ──
+  function loadTrips() {
+    const tripsRef = ref(db, 'trips');
+    onValue(tripsRef, snapshot => {
+      allTrips = snapshot.val() || {};
+      renderTrips();
+    });
+  }
+
+  function renderTrips() {
+    const list = document.getElementById('trips-list');
+    const empty = document.getElementById('trips-empty');
+    const keys = Object.keys(allTrips);
+    if (keys.length === 0) {
+      list.innerHTML = '';
+      empty.style.display = 'block';
+      return;
+    }
+    empty.style.display = 'none';
+    list.innerHTML = keys.map(id => {
+      const t = allTrips[id];
+      const segCount = t.segments ? Object.keys(t.segments).length : 0;
+      const dateStr = formatDateRange(t.startDate, t.endDate);
+      return `
+        <div class="card">
+          <div class="trip-card" onclick="openTrip('${id}')">
+            <div class="trip-icon">✈️</div>
+            <div class="trip-info">
+              <div class="trip-name">${esc(t.name)}</div>
+              <div class="trip-dates">${esc(t.destination || '')}${t.destination && dateStr ? ' · ' : ''}${dateStr}</div>
+            </div>
+            ${segCount > 0 ? `<div class="trip-count">${segCount} segment${segCount !== 1 ? 's' : ''}</div>` : ''}
+            <div class="trip-arrow">›</div>
+          </div>
+        </div>`;
+    }).join('');
+  }
+
+  // ── OPEN TRIP ──
+  window.openTrip = function(tripId) {
+    currentTripId = tripId;
+    const trip = allTrips[tripId];
+    document.getElementById('overview-title').textContent = trip.name;
+    document.getElementById('overview-dates').textContent =
+      [trip.destination, formatDateRange(trip.startDate, trip.endDate)].filter(Boolean).join(' · ');
+
+    // Mode badges
+    const badge = isEditor
+      ? '<span class="mode-badge mode-editor">✏️ Editor</span>'
+      : '<span class="mode-badge mode-viewer">👁 View only</span>';
+    document.getElementById('overview-mode-badge').outerHTML = badge;
+
+    if (isEditor) {
+      document.getElementById('overview-editor-bar').classList.add('visible');
+      document.getElementById('fab-new-segment').classList.add('visible');
+      document.getElementById('fab-new-segment').onclick = () => openModal('modal-add-segment');
+    }
+    showScreen('screen-overview');
+    renderOverview(trip);
+  };
+
+  function renderOverview(trip) {
+    const container = document.getElementById('overview-timeline');
+    const empty = document.getElementById('overview-empty');
+    const segments = trip.segments || {};
+    const keys = Object.keys(segments);
+
+    if (keys.length === 0) {
+      container.innerHTML = '';
+      empty.style.display = 'block';
+      return;
+    }
+    empty.style.display = 'none';
+
+    // Sort segments by start time
+    const sorted = keys
+      .map(id => ({ id, ...segments[id] }))
+      .sort((a, b) => (a.startTime || '').localeCompare(b.startTime || ''));
+
+    // Group by date
+    const byDate = {};
+    sorted.forEach(seg => {
+      const dateKey = seg.startTime ? seg.startTime.split('T')[0] : 'undated';
+      if (!byDate[dateKey]) byDate[dateKey] = [];
+      byDate[dateKey].push(seg);
+    });
+
+    // Build stay blocks for accommodation spanning multiple days
+    let stayHotel = null;
+    let stayEnd = null;
+    const allDates = Object.keys(byDate).sort();
+
+    container.innerHTML = allDates.map(dateKey => {
+      const segs = byDate[dateKey];
+      const dateLabel = dateKey === 'undated' ? 'No date' : formatDayLabel(dateKey);
+      const segHtml = segs.map(seg => {
+        const icon = ICONS[seg.type] || '📋';
+        const iconClass = ICON_CLASS[seg.type] || 'admin';
+        const timeStr = seg.startTime ? formatTime(seg.startTime) : '';
+        return `
+          <div class="segment-card" onclick="openSegment('${seg.id}')">
+            <div class="seg-icon ${iconClass}">${icon}</div>
+            <div class="seg-body">
+              <div class="seg-title">${esc(seg.title)}</div>
+              <div class="seg-sub">${esc(seg.type)}${seg.subTitle ? ' · ' + esc(seg.subTitle) : ''}</div>
+            </div>
+            ${timeStr ? `<div class="seg-time">${timeStr}</div>` : ''}
+          </div>`;
+      }).join('');
+
+      return `
+        <div class="day-block">
+          <div class="day-header">${dateLabel}</div>
+          ${segHtml}
+        </div>`;
+    }).join('');
+  }
+
+  // ── OPEN SEGMENT ──
+  window.openSegment = function(segId) {
+    currentSegmentId = segId;
+    const seg = allTrips[currentTripId].segments[segId];
+    const icon = ICONS[seg.type] || '📋';
+    const iconClass = ICON_CLASS[seg.type] || 'admin';
+
+    // Back button
+    document.getElementById('detail-back-btn').onclick = () => showScreen('screen-overview');
+
+    // Editor bar
+    if (isEditor) {
+      document.getElementById('detail-editor-bar').classList.add('visible');
+    }
+
+    // Hero
+    document.getElementById('detail-hero').innerHTML = `
+      <div class="detail-hero-icon seg-icon ${iconClass}" style="width:56px;height:56px;border-radius:14px;font-size:24px;">${icon}</div>
+      <div class="detail-hero-text">
+        <div class="detail-type">${esc(seg.type)}</div>
+        <div class="detail-name">${esc(seg.title)}</div>
+      </div>`;
+
+    // Fields - parse the details string into rows
+    const details = seg.details || '';
+    const lines = details.split('\n').filter(l => l.trim());
+    let fieldsHtml = '';
+
+    // Start/end times
+    if (seg.startTime) {
+      fieldsHtml += detailRow('Starts', formatDateTime(seg.startTime));
+    }
+    if (seg.endTime) {
+      fieldsHtml += detailRow('Ends', formatDateTime(seg.endTime));
+    }
+
+    // Detail lines
+    lines.forEach(line => {
+      const colonIdx = line.indexOf(':');
+      if (colonIdx > 0 && colonIdx < 30) {
+        const label = line.substring(0, colonIdx).trim();
+        const value = line.substring(colonIdx + 1).trim();
+        // Make phone numbers tappable
+        if (/^\+?[\d\s\-()]{7,}$/.test(value)) {
+          fieldsHtml += detailRow(label, `<a href="tel:${value.replace(/\s/g,'')}">${esc(value)}</a>`);
+        } else {
+          fieldsHtml += detailRow(label, esc(value));
+        }
+      } else if (line.trim()) {
+        fieldsHtml += detailRow('', esc(line));
+      }
+    });
+
+    document.getElementById('detail-fields').innerHTML = fieldsHtml;
+
+    // Notes
+    if (isEditor) {
+      document.getElementById('detail-notes-section').style.display = 'block';
+      document.getElementById('detail-notes-view').style.display = 'none';
+      document.getElementById('detail-notes').value = seg.notes || '';
+    } else {
+      document.getElementById('detail-notes-section').style.display = 'none';
+      if (seg.notes) {
+        document.getElementById('detail-notes-view').style.display = 'block';
+        document.getElementById('detail-notes-text').textContent = seg.notes;
+      } else {
+        document.getElementById('detail-notes-view').style.display = 'none';
+      }
+    }
+
+    // PDF button
+    const pdfBtn = document.getElementById('pdf-btn');
+    if (seg.pdfUrl) {
+      pdfBtn.classList.remove('no-pdf');
+      pdfBtn.title = 'Open original booking document';
+    } else {
+      pdfBtn.classList.add('no-pdf');
+      pdfBtn.title = 'No document attached';
+    }
+
+    showScreen('screen-detail');
+  };
+
+  function detailRow(label, value) {
+    return `<div class="detail-row">
+      <div class="detail-label">${label}</div>
+      <div class="detail-value">${value}</div>
+    </div>`;
+  }
+
+  // ── SAVE NOTES ──
+  window.saveNotes = function() {
+    const notes = document.getElementById('detail-notes').value;
+    set(ref(db, `trips/${currentTripId}/segments/${currentSegmentId}/notes`), notes);
+  };
+
+  // ── OPEN PDF ──
+  window.openPdf = function() {
+    const seg = allTrips[currentTripId].segments[currentSegmentId];
+    if (seg && seg.pdfUrl) {
+      window.open(seg.pdfUrl, '_blank');
+    }
+  };
+
+  // ── CREATE TRIP ──
+  window.createTrip = async function() {
+    const name = document.getElementById('trip-name-input').value.trim();
+    if (!name) { showToast('Please enter a trip name'); return; }
+    const tripData = {
+      name,
+      destination: document.getElementById('trip-dest-input').value.trim(),
+      startDate: document.getElementById('trip-start-input').value,
+      endDate: document.getElementById('trip-end-input').value,
+      created: Date.now()
+    };
+    const newRef = push(ref(db, 'trips'));
+    await set(newRef, tripData);
+    closeModal('modal-new-trip');
+    document.getElementById('trip-name-input').value = '';
+    document.getElementById('trip-dest-input').value = '';
+    document.getElementById('trip-start-input').value = '';
+    document.getElementById('trip-end-input').value = '';
+    showToast('Trip created!');
+  };
+
+  // ── FILE SELECT ──
+  window.handleFileSelect = async function(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    selectedFile = file;
+    document.getElementById('upload-filename').textContent = file.name;
+    document.getElementById('upload-area').classList.add('has-file');
+
+    // Show processing
+    document.getElementById('processing-state').classList.add('visible');
+    document.getElementById('upload-area').style.pointerEvents = 'none';
+
+    try {
+      // Convert PDF to base64 and call Claude API
+      const base64 = await fileToBase64(file);
+      const extracted = await extractWithClaude(base64);
+      extractedData = extracted;
+
+      // Populate review form
+      document.getElementById('seg-type').value = extracted.segment_type || 'Admin';
+      document.getElementById('seg-title-input').value = extracted.title || '';
+      document.getElementById('seg-start-input').value = extracted.start_time || '';
+      document.getElementById('seg-end-input').value = extracted.end_time || '';
+      document.getElementById('seg-details-input').value = extracted.details || '';
+
+      // Show review step
+      document.getElementById('seg-step-upload').style.display = 'none';
+      document.getElementById('seg-step-review').style.display = 'block';
+    } catch(e) {
+      showToast('Could not read PDF — please try again');
+      document.getElementById('processing-state').classList.remove('visible');
+      document.getElementById('upload-area').style.pointerEvents = 'auto';
+    }
+  };
+
+  // ── EXTRACT WITH CLAUDE ──
+  async function extractWithClaude(base64Pdf) {
+    const systemPrompt = `You are a structured travel data extraction engine. Extract data from the PDF and return ONLY a JSON object with these exact fields:
+- segment_type: one of "Flight", "Accommodation", "Transfer", "Experience", "Meal", "Admin"
+- title: a short descriptive title (e.g. "BA297 London to Chicago", "Westin Chicago", "Transfer to Airport")
+- start_time: ISO datetime string (YYYY-MM-DDTHH:MM) or empty string
+- end_time: ISO datetime string (YYYY-MM-DDTHH:MM) or empty string  
+- details: all extracted fields as "Label: Value" pairs separated by newlines
+- notes: empty string
+
+Rules:
+- If a flight PDF contains TWO flights (outbound and return), extract ONLY the FIRST/OUTBOUND flight
+- Never guess or infer missing data
+- If unsure of type, use "Admin"
+- Return ONLY valid JSON, no other text`;
+
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        system: systemPrompt,
+        messages: [{
+          role: 'user',
+          content: [{
+            type: 'document',
+            source: { type: 'base64', media_type: 'application/pdf', data: base64Pdf }
+          }, {
+            type: 'text',
+            text: 'Extract the travel data from this document and return JSON only.'
+          }]
+        }]
+      })
+    });
+
+    const data = await response.json();
+    const text = data.content[0].text;
+    const clean = text.replace(/```json|```/g, '').trim();
+    return JSON.parse(clean);
+  }
+
+  // ── SAVE SEGMENT ──
+  window.saveSegment = async function() {
+    const title = document.getElementById('seg-title-input').value.trim();
+    if (!title) { showToast('Please add a title'); return; }
+
+    let pdfUrl = '';
+    if (selectedFile) {
+      try {
+        const storageRef = sRef(storage, `trips/${currentTripId}/pdfs/${Date.now()}_${selectedFile.name}`);
+        await uploadBytes(storageRef, selectedFile);
+        pdfUrl = await getDownloadURL(storageRef);
+      } catch(e) {
+        showToast('PDF upload failed — saving without document');
+      }
+    }
+
+    const segData = {
+      type: document.getElementById('seg-type').value,
+      title,
+      subTitle: '',
+      startTime: document.getElementById('seg-start-input').value,
+      endTime: document.getElementById('seg-end-input').value,
+      details: document.getElementById('seg-details-input').value,
+      notes: '',
+      pdfUrl,
+      created: Date.now()
+    };
+
+    const newRef = push(ref(db, `trips/${currentTripId}/segments`));
+    await set(newRef, segData);
+    closeModal('modal-add-segment');
+    resetSegmentModal();
+    showToast('Segment added!');
+  };
+
+  // ── DELETE TRIP ──
+  window.confirmDeleteTrip = function() {
+    document.getElementById('confirm-title').textContent = 'Delete this trip?';
+    document.getElementById('confirm-sub').textContent = 'All segments and documents will be permanently deleted.';
+    confirmCallback = async () => {
+      await remove(ref(db, `trips/${currentTripId}`));
+      closeConfirm();
+      showTrips();
+      showToast('Trip deleted');
+    };
+    document.getElementById('confirm-ok-btn').onclick = confirmCallback;
+    document.getElementById('confirm-overlay').classList.add('open');
+  };
+
+  // ── DELETE SEGMENT ──
+  window.confirmDeleteSegment = function() {
+    document.getElementById('confirm-title').textContent = 'Delete this segment?';
+    document.getElementById('confirm-sub').textContent = 'The segment and its document will be permanently deleted.';
+    confirmCallback = async () => {
+      const seg = allTrips[currentTripId].segments[currentSegmentId];
+      if (seg.pdfUrl) {
+        try { await deleteObject(sRef(storage, seg.pdfUrl)); } catch(e) {}
+      }
+      await remove(ref(db, `trips/${currentTripId}/segments/${currentSegmentId}`));
+      closeConfirm();
+      showScreen('screen-overview');
+      showToast('Segment deleted');
+    };
+    document.getElementById('confirm-ok-btn').onclick = confirmCallback;
+    document.getElementById('confirm-overlay').classList.add('open');
+  };
+
+  window.closeConfirm = function() {
+    document.getElementById('confirm-overlay').classList.remove('open');
+  };
+
+  // ── NAVIGATION ──
+  window.showTrips = function() { showScreen('screen-trips'); };
+
+  function showScreen(id) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+    window.scrollTo(0, 0);
+  }
+
+  // ── MODALS ──
+  window.openModal = function(id) {
+    document.getElementById(id).classList.add('open');
+  };
+  window.closeModal = function(id) {
+    document.getElementById(id).classList.remove('open');
+  };
+
+  // ── RESET SEGMENT MODAL ──
+  window.resetSegmentModal = function() {
+    selectedFile = null;
+    extractedData = null;
+    document.getElementById('upload-filename').textContent = '';
+    document.getElementById('upload-area').classList.remove('has-file');
+    document.getElementById('upload-area').style.pointerEvents = 'auto';
+    document.getElementById('processing-state').classList.remove('visible');
+    document.getElementById('seg-step-upload').style.display = 'block';
+    document.getElementById('seg-step-review').style.display = 'none';
+    document.getElementById('pdf-file-input').value = '';
+  };
+
+  // ── TOAST ──
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2800);
+  }
+  window.showToast = showToast;
+
+  // ── HELPERS ──
+  function esc(str) {
+    if (!str) return '';
+    return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  function fileToBase64(file) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result.split(',')[1]);
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  }
+
+  function formatDateRange(start, end) {
+    if (!start && !end) return '';
+    const fmt = d => {
+      if (!d) return '';
+      const dt = new Date(d);
+      return dt.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+    };
+    if (start && end) return `${fmt(start)} – ${fmt(end)}`;
+    return fmt(start) || fmt(end);
+  }
+
+  function formatDayLabel(dateStr) {
+    const dt = new Date(dateStr + 'T12:00:00');
+    return dt.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' });
+  }
+
+  function formatTime(dtStr) {
+    if (!dtStr) return '';
+    const dt = new Date(dtStr);
+    return dt.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+  }
+
+  function formatDateTime(dtStr) {
+    if (!dtStr) return '';
+    const dt = new Date(dtStr);
+    return dt.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' }) +
+      ' at ' + dt.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+  }
+
+  // New trip FAB
+  document.getElementById('fab-new-trip').onclick = () => openModal('modal-new-trip');
+
+  // Close modals on overlay click
+  document.querySelectorAll('.modal-overlay').forEach(overlay => {
+    overlay.addEventListener('click', e => {
+      if (e.target === overlay) overlay.classList.remove('open');
+    });
+  });
+
+  // START
+  init();
+</script>
+</body>
+</html>
