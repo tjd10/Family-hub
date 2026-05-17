@@ -932,15 +932,15 @@
 
   // ── INIT ──
   function init() {
-    // Set mode badges
-    const badge = isEditor
-      ? '<span class="mode-badge mode-editor">✏️ Editor</span>'
-      : '<span class="mode-badge mode-viewer">👁 View only</span>';
-    document.getElementById('trips-mode-badge').outerHTML = badge;
-
+    const tripsBadge = document.getElementById('trips-mode-badge');
     if (isEditor) {
+      tripsBadge.textContent = 'Editor';
+      tripsBadge.className = 'mode-badge mode-editor';
       document.getElementById('trips-editor-bar').classList.add('visible');
       document.getElementById('fab-new-trip').classList.add('visible');
+    } else {
+      tripsBadge.textContent = 'View only';
+      tripsBadge.className = 'mode-badge mode-viewer';
     }
     loadTrips();
   }
@@ -951,6 +951,10 @@
     onValue(tripsRef, snapshot => {
       allTrips = snapshot.val() || {};
       renderTrips();
+      // Re-render overview if currently viewing a trip
+      if (currentTripId && document.getElementById('screen-overview').classList.contains('active')) {
+        renderOverview();
+      }
     });
   }
 
@@ -991,22 +995,24 @@
     document.getElementById('overview-dates').textContent =
       [trip.destination, formatDateRange(trip.startDate, trip.endDate)].filter(Boolean).join(' · ');
 
-    // Mode badges
-    const badge = isEditor
-      ? '<span class="mode-badge mode-editor">✏️ Editor</span>'
-      : '<span class="mode-badge mode-viewer">👁 View only</span>';
-    document.getElementById('overview-mode-badge').outerHTML = badge;
-
+    const overviewBadge = document.getElementById('overview-mode-badge');
     if (isEditor) {
+      overviewBadge.textContent = 'Editor';
+      overviewBadge.className = 'mode-badge mode-editor';
       document.getElementById('overview-editor-bar').classList.add('visible');
       document.getElementById('fab-new-segment').classList.add('visible');
       document.getElementById('fab-new-segment').onclick = () => openModal('modal-add-segment');
+    } else {
+      overviewBadge.textContent = 'View only';
+      overviewBadge.className = 'mode-badge mode-viewer';
     }
     showScreen('screen-overview');
-    renderOverview(trip);
+    renderOverview();
   };
 
-  function renderOverview(trip) {
+  function renderOverview() {
+    const trip = allTrips[currentTripId];
+    if (!trip) return;
     const container = document.getElementById('overview-timeline');
     const empty = document.getElementById('overview-empty');
     const segments = trip.segments || {};
@@ -1243,7 +1249,7 @@ Rules:
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
+        model: 'claude-sonnet-4-5',
         max_tokens: 1000,
         system: systemPrompt,
         messages: [{
@@ -1273,14 +1279,17 @@ Rules:
     let pdfUrl = '';
     if (selectedFile) {
       try {
-        const storageRef = sRef(storage, `trips/${currentTripId}/pdfs/${Date.now()}_${selectedFile.name}`);
+        const pdfPath = `trips/${currentTripId}/pdfs/${Date.now()}_${selectedFile.name}`;
+        const storageRef = sRef(storage, pdfPath);
         await uploadBytes(storageRef, selectedFile);
         pdfUrl = await getDownloadURL(storageRef);
+        segData_pdfPath = pdfPath;
       } catch(e) {
         showToast('PDF upload failed — saving without document');
       }
     }
 
+    let segData_pdfPath = '';
     const segData = {
       type: document.getElementById('seg-type').value,
       title,
@@ -1290,6 +1299,7 @@ Rules:
       details: document.getElementById('seg-details-input').value,
       notes: '',
       pdfUrl,
+      pdfPath: segData_pdfPath,
       created: Date.now()
     };
 
@@ -1320,8 +1330,8 @@ Rules:
     document.getElementById('confirm-sub').textContent = 'The segment and its document will be permanently deleted.';
     confirmCallback = async () => {
       const seg = allTrips[currentTripId].segments[currentSegmentId];
-      if (seg.pdfUrl) {
-        try { await deleteObject(sRef(storage, seg.pdfUrl)); } catch(e) {}
+      if (seg.pdfPath) {
+        try { await deleteObject(sRef(storage, seg.pdfPath)); } catch(e) {}
       }
       await remove(ref(db, `trips/${currentTripId}/segments/${currentSegmentId}`));
       closeConfirm();
