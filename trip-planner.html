@@ -1084,6 +1084,12 @@
     } else {
       tripsBadge.textContent = 'View only';
       tripsBadge.className = 'mode-badge mode-viewer';
+      // Explicitly hide all editor elements for viewers
+      document.getElementById('trips-editor-bar').classList.remove('visible');
+      document.getElementById('fab-new-trip').classList.remove('visible');
+      document.getElementById('overview-editor-bar').classList.remove('visible');
+      document.getElementById('fab-new-segment').classList.remove('visible');
+      document.getElementById('detail-editor-bar').classList.remove('visible');
     }
     loadTrips();
   }
@@ -1194,6 +1200,8 @@
     } else {
       overviewBadge.textContent = 'View only';
       overviewBadge.className = 'mode-badge mode-viewer';
+      document.getElementById('overview-editor-bar').classList.remove('visible');
+      document.getElementById('fab-new-segment').classList.remove('visible');
     }
     showScreen('screen-overview');
     renderOverview();
@@ -1271,6 +1279,8 @@
     // Editor bar
     if (isEditor) {
       document.getElementById('detail-editor-bar').classList.add('visible');
+    } else {
+      document.getElementById('detail-editor-bar').classList.remove('visible');
     }
 
     // Hero
