@@ -918,7 +918,7 @@
     <div class="field-row">
       <div class="field">
         <label>Start date</label>
-        <input type="date" id="trip-start-input"/>
+        <input type="date" id="trip-start-input" onchange="onStartDateChange()"/>
       </div>
       <div class="field">
         <label>End date</label>
@@ -1370,6 +1370,19 @@
     if (seg && seg.pdfUrl) {
       window.open(seg.pdfUrl, '_blank');
     }
+  };
+
+  // ── AUTO SET END DATE ──
+  window.onStartDateChange = function() {
+    const start = document.getElementById('trip-start-input').value;
+    if (!start) return;
+    const startDate = new Date(start);
+    startDate.setDate(startDate.getDate() + 1);
+    const yyyy = startDate.getFullYear();
+    const mm = String(startDate.getMonth() + 1).padStart(2, '0');
+    const dd = String(startDate.getDate()).padStart(2, '0');
+    document.getElementById('trip-end-input').value = `${yyyy}-${mm}-${dd}`;
+    document.getElementById('trip-end-input').min = start;
   };
 
   // ── CREATE TRIP ──
