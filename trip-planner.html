@@ -757,6 +757,69 @@
     }
     .login-submit:hover { background: var(--accent2); }
 
+    /* ── KEEP PDF TOGGLE ── */
+    .keep-pdf-row {
+      display: none;
+      align-items: center;
+      justify-content: space-between;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 13px 16px;
+      margin-bottom: 10px;
+    }
+    .keep-pdf-row.visible { display: flex; }
+    .keep-pdf-label {
+      font-size: 13px;
+      color: var(--text2);
+    }
+    .keep-pdf-sub {
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+    .toggle-switch {
+      position: relative;
+      width: 44px;
+      height: 24px;
+      flex-shrink: 0;
+    }
+    .toggle-switch input { display: none; }
+    .toggle-slider {
+      position: absolute;
+      inset: 0;
+      background: var(--border);
+      border-radius: 24px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .toggle-slider:before {
+      content: '';
+      position: absolute;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: white;
+      top: 3px;
+      left: 3px;
+      transition: transform 0.2s;
+    }
+    .toggle-switch input:checked + .toggle-slider { background: var(--accent); }
+    .toggle-switch input:checked + .toggle-slider:before { transform: translateX(20px); }
+
+    /* ── ARCHIVED TRIPS ── */
+    .trip-card.archived { opacity: 0.5; }
+    .archived-badge {
+      font-size: 10px;
+      background: rgba(61,106,138,0.2);
+      border: 1px solid rgba(61,106,138,0.3);
+      border-radius: 4px;
+      padding: 2px 7px;
+      color: var(--muted);
+      margin-left: 8px;
+      vertical-align: middle;
+    }
+
     /* ── SIGN OUT BUTTON ── */
     .signout-btn {
       font-size: 11px;
@@ -948,6 +1011,7 @@
     <div id="overview-editor-bar" class="editor-bar">
       <span class="editor-label">✏️ Editor mode</span>
       <div class="editor-actions">
+        <button class="btn-sm btn-ghost" onclick="confirmArchiveTrip()">Archive</button>
         <button class="btn-sm btn-danger" onclick="confirmDeleteTrip()">Delete trip</button>
       </div>
     </div>
@@ -1017,6 +1081,17 @@
     <button id="pdf-btn" class="pdf-btn" onclick="openPdf()">
       📄 View original document
     </button>
+    <!-- Keep PDF toggle — editor only, shown when PDF exists -->
+    <div id="keep-pdf-row" class="keep-pdf-row">
+      <div>
+        <div class="keep-pdf-label">Keep PDF after trip is archived</div>
+        <div class="keep-pdf-sub">Off — PDF will be deleted when trip is archived</div>
+      </div>
+      <label class="toggle-switch">
+        <input type="checkbox" id="keep-pdf-toggle" onchange="saveKeepPdf()"/>
+        <span class="toggle-slider"></span>
+      </label>
+    </div>
   </div>
 </div>
 
@@ -1286,23 +1361,34 @@
       return;
     }
     empty.style.display = 'none';
-    list.innerHTML = keys.map(id => {
+
+    const active = keys.filter(id => !allTrips[id].archived);
+    const archived = keys.filter(id => allTrips[id].archived);
+
+    const tripCard = (id, isArchived) => {
       const t = allTrips[id];
       const segCount = t.segments ? Object.keys(t.segments).length : 0;
       const dateStr = formatDateRange(t.startDate, t.endDate);
       return `
         <div class="card">
-          <div class="trip-card" onclick="openTrip('${id}')">
+          <div class="trip-card${isArchived ? ' archived' : ''}" onclick="openTrip('${id}')">
             <div class="trip-icon">✈️</div>
             <div class="trip-info">
-              <div class="trip-name">${esc(t.name)}</div>
+              <div class="trip-name">${esc(t.name)}${isArchived ? '<span class="archived-badge">Archived</span>' : ''}</div>
               <div class="trip-dates">${esc(t.destination || '')}${t.destination && dateStr ? ' · ' : ''}${dateStr}</div>
             </div>
             ${segCount > 0 ? `<div class="trip-count">${segCount} segment${segCount !== 1 ? 's' : ''}</div>` : ''}
             <div class="trip-arrow">›</div>
           </div>
         </div>`;
-    }).join('');
+    };
+
+    let html = active.map(id => tripCard(id, false)).join('');
+    if (archived.length > 0) {
+      html += `<div class="section-label" style="margin-top:24px;">Past Trips</div>`;
+      html += archived.map(id => tripCard(id, true)).join('');
+    }
+    list.innerHTML = html;
   }
 
   // ── OPEN TRIP ──
@@ -1471,6 +1557,20 @@
       pdfBtn.title = 'No document attached';
     }
 
+    // Keep PDF toggle — editor only, shown when PDF exists
+    const keepRow = document.getElementById('keep-pdf-row');
+    const keepToggle = document.getElementById('keep-pdf-toggle');
+    const keepSub = document.querySelector('#keep-pdf-row .keep-pdf-sub');
+    if (isEditor && seg.pdfUrl) {
+      keepRow.classList.add('visible');
+      keepToggle.checked = !!seg.keepPdf;
+      keepSub.textContent = seg.keepPdf
+        ? 'On — PDF will be kept when trip is archived'
+        : 'Off — PDF will be deleted when trip is archived';
+    } else {
+      keepRow.classList.remove('visible');
+    }
+
     // Seat map
     initSeatMap(seg);
 
@@ -1534,6 +1634,50 @@
       window.open(seg.seatMapUrl, '_blank');
     }
   };
+
+  // ── KEEP PDF TOGGLE ──
+  window.saveKeepPdf = function() {
+    const keep = document.getElementById('keep-pdf-toggle').checked;
+    set(ref(db, `trips/${currentTripId}/segments/${currentSegmentId}/keepPdf`), keep);
+    const sub = document.querySelector('#keep-pdf-row .keep-pdf-sub');
+    sub.textContent = keep
+      ? 'On — PDF will be kept when trip is archived'
+      : 'Off — PDF will be deleted when trip is archived';
+  };
+
+  // ── ARCHIVE TRIP ──
+  window.confirmArchiveTrip = function() {
+    document.getElementById('confirm-title').textContent = 'Archive this trip?';
+    document.getElementById('confirm-sub').textContent = 'PDFs not marked to keep will be deleted. The trip will move to Past Trips.';
+    document.getElementById('confirm-ok-btn').textContent = 'Archive';
+    document.getElementById('confirm-ok-btn').onclick = archiveTrip;
+    document.getElementById('confirm-overlay').classList.add('open');
+  };
+
+  async function archiveTrip() {
+    closeConfirm();
+    const trip = allTrips[currentTripId];
+    const segments = trip.segments || {};
+    // Delete PDFs not marked to keep
+    for (const segId of Object.keys(segments)) {
+      const seg = segments[segId];
+      if (seg.pdfPath && !seg.keepPdf) {
+        try { await deleteObject(sRef(storage, seg.pdfPath)); } catch(e) {}
+        await set(ref(db, `trips/${currentTripId}/segments/${segId}/pdfUrl`), '');
+        await set(ref(db, `trips/${currentTripId}/segments/${segId}/pdfPath`), '');
+      }
+      // Always delete seat maps on archive
+      if (seg.seatMapPath) {
+        try { await deleteObject(sRef(storage, seg.seatMapPath)); } catch(e) {}
+        await set(ref(db, `trips/${currentTripId}/segments/${segId}/seatMapUrl`), '');
+        await set(ref(db, `trips/${currentTripId}/segments/${segId}/seatMapPath`), '');
+      }
+    }
+    // Mark trip as archived
+    await set(ref(db, `trips/${currentTripId}/archived`), true);
+    showTrips();
+    showToast('Trip archived');
+  }
 
   // Marker functions reserved for V2 seat map overlay feature
 
@@ -1807,6 +1951,7 @@ Rules:
 
   window.closeConfirm = function() {
     document.getElementById('confirm-overlay').classList.remove('open');
+    document.getElementById('confirm-ok-btn').textContent = 'Delete';
   };
 
   // ── NAVIGATION ──
