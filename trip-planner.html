@@ -1591,9 +1591,17 @@
   };
 
   // ── OPEN PDF ──
-  window.openPdf = function() {
+  window.openPdf = async function() {
     const seg = allTrips[currentTripId].segments[currentSegmentId];
-    if (seg && seg.pdfUrl) {
+    if (!seg) return;
+    if (seg.pdfPath) {
+      try {
+        const url = await getDownloadURL(sRef(storage, seg.pdfPath));
+        window.open(url, '_blank');
+      } catch(e) {
+        showToast('Could not open document — it may have been deleted');
+      }
+    } else if (seg.pdfUrl) {
       window.open(seg.pdfUrl, '_blank');
     }
   };
@@ -1628,9 +1636,17 @@
     }
   }
 
-  window.viewSeatMap = function() {
+  window.viewSeatMap = async function() {
     const seg = allTrips[currentTripId].segments[currentSegmentId];
-    if (seg && seg.seatMapUrl) {
+    if (!seg) return;
+    if (seg.seatMapPath) {
+      try {
+        const url = await getDownloadURL(sRef(storage, seg.seatMapPath));
+        window.open(url, '_blank');
+      } catch(e) {
+        showToast('Could not open seat map — it may have been deleted');
+      }
+    } else if (seg.seatMapUrl) {
       window.open(seg.seatMapUrl, '_blank');
     }
   };
