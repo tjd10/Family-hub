@@ -1594,15 +1594,25 @@
   window.openPdf = async function() {
     const seg = allTrips[currentTripId].segments[currentSegmentId];
     if (!seg) return;
-    if (seg.pdfPath) {
+    // Use pdfPath if available, otherwise extract path from pdfUrl
+    let path = seg.pdfPath || '';
+    if (!path && seg.pdfUrl) {
+      // Extract storage path from Firebase Storage URL
       try {
-        const url = await getDownloadURL(sRef(storage, seg.pdfPath));
-        window.open(url, '_blank');
+        const url = new URL(seg.pdfUrl);
+        const encoded = url.pathname.split('/o/')[1];
+        if (encoded) path = decodeURIComponent(encoded.split('?')[0]);
+      } catch(e) {}
+    }
+    if (path) {
+      try {
+        const freshUrl = await getDownloadURL(sRef(storage, path));
+        window.open(freshUrl, '_blank');
       } catch(e) {
         showToast('Could not open document — it may have been deleted');
       }
-    } else if (seg.pdfUrl) {
-      window.open(seg.pdfUrl, '_blank');
+    } else {
+      showToast('No document attached to this segment');
     }
   };
 
@@ -1639,15 +1649,21 @@
   window.viewSeatMap = async function() {
     const seg = allTrips[currentTripId].segments[currentSegmentId];
     if (!seg) return;
-    if (seg.seatMapPath) {
+    let path = seg.seatMapPath || '';
+    if (!path && seg.seatMapUrl) {
       try {
-        const url = await getDownloadURL(sRef(storage, seg.seatMapPath));
-        window.open(url, '_blank');
+        const url = new URL(seg.seatMapUrl);
+        const encoded = url.pathname.split('/o/')[1];
+        if (encoded) path = decodeURIComponent(encoded.split('?')[0]);
+      } catch(e) {}
+    }
+    if (path) {
+      try {
+        const freshUrl = await getDownloadURL(sRef(storage, path));
+        window.open(freshUrl, '_blank');
       } catch(e) {
         showToast('Could not open seat map — it may have been deleted');
       }
-    } else if (seg.seatMapUrl) {
-      window.open(seg.seatMapUrl, '_blank');
     }
   };
 
