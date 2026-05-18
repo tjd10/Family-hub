@@ -820,6 +820,33 @@
       vertical-align: middle;
     }
 
+    /* ── GAP WARNINGS ── */
+    .gap-warning {
+      background: rgba(251,191,36,0.08);
+      border: 1px solid rgba(251,191,36,0.2);
+      border-radius: 10px;
+      padding: 10px 14px;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .gap-icon { font-size: 14px; flex-shrink: 0; }
+    .gap-text { flex: 1; font-size: 12px; color: #fbbf24; line-height: 1.4; }
+    .gap-dismiss {
+      font-size: 11px;
+      color: var(--muted);
+      background: none;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 4px 8px;
+      cursor: pointer;
+      font-family: 'DM Sans', sans-serif;
+      flex-shrink: 0;
+      transition: all 0.2s;
+    }
+    .gap-dismiss:hover { border-color: var(--muted); color: var(--text); }
+
     /* ── SIGN OUT BUTTON ── */
     .signout-btn {
       font-size: 11px;
@@ -1416,6 +1443,62 @@
     renderOverview();
   };
 
+  // ── GAP DETECTION ──
+  function detectGaps(sorted) {
+    const trip = allTrips[currentTripId];
+    const dismissed = trip.dismissedGaps || {};
+    const gaps = [];
+
+    sorted.forEach(seg => {
+      if (!seg.startTime) return;
+      const startDate = seg.startTime.split('T')[0];
+      const endDate = seg.endTime ? seg.endTime.split('T')[0] : startDate;
+
+      if (seg.type === 'Flight') {
+        const hasOutboundTransfer = sorted.some(s =>
+          s.type === 'Transfer' && s.startTime && s.startTime.split('T')[0] === startDate
+        );
+        if (!hasOutboundTransfer) {
+          const key = 'no-transfer-out-' + startDate;
+          if (!dismissed[key]) gaps.push({ date: startDate, key, text: 'No transfer to airport found on this day' });
+        }
+
+        const hasInboundTransfer = sorted.some(s =>
+          s.type === 'Transfer' && s.startTime && s.startTime.split('T')[0] === endDate
+        );
+        if (!hasInboundTransfer) {
+          const key = 'no-transfer-in-' + endDate;
+          if (!dismissed[key]) gaps.push({ date: endDate, key, text: 'No transfer from airport found on arrival day' });
+        }
+
+        const hasAccomm = sorted.some(s =>
+          s.type === 'Accommodation' && s.startTime && s.startTime.split('T')[0] === endDate
+        );
+        if (!hasAccomm) {
+          const key = 'no-hotel-checkin-' + endDate;
+          if (!dismissed[key]) gaps.push({ date: endDate, key, text: 'No hotel check-in found on arrival day' });
+        }
+      }
+
+      if (seg.type === 'Accommodation' && seg.endTime) {
+        const hasOnward = sorted.some(s =>
+          s.id !== seg.id && s.startTime && s.startTime.split('T')[0] === endDate
+        );
+        if (!hasOnward) {
+          const key = 'no-onward-' + endDate;
+          if (!dismissed[key]) gaps.push({ date: endDate, key, text: 'Nothing planned on hotel check-out day' });
+        }
+      }
+    });
+
+    const seen = new Set();
+    return gaps.filter(g => { if (seen.has(g.key)) return false; seen.add(g.key); return true; });
+  }
+
+  window.dismissGap = async function(key) {
+    await set(ref(db, `trips/${currentTripId}/dismissedGaps/${key.replace(/[^a-zA-Z0-9_-]/g, '_')}`), true);
+  };
+
   function renderOverview() {
     const trip = allTrips[currentTripId];
     if (!trip) return;
@@ -1431,12 +1514,10 @@
     }
     empty.style.display = 'none';
 
-    // Sort segments by start time
     const sorted = keys
       .map(id => ({ id, ...segments[id] }))
       .sort((a, b) => (a.startTime || '').localeCompare(b.startTime || ''));
 
-    // Group by date
     const byDate = {};
     sorted.forEach(seg => {
       const dateKey = seg.startTime ? seg.startTime.split('T')[0] : 'undated';
@@ -1444,9 +1525,13 @@
       byDate[dateKey].push(seg);
     });
 
-    // Build stay blocks for accommodation spanning multiple days
-    let stayHotel = null;
-    let stayEnd = null;
+    const gaps = detectGaps(sorted);
+    const gapsByDate = {};
+    gaps.forEach(g => {
+      if (!gapsByDate[g.date]) gapsByDate[g.date] = [];
+      gapsByDate[g.date].push(g);
+    });
+
     const allDates = Object.keys(byDate).sort();
 
     container.innerHTML = allDates.map(dateKey => {
@@ -1467,15 +1552,24 @@
           </div>`;
       }).join('');
 
+      const dayGaps = gapsByDate[dateKey] || [];
+      const gapHtml = dayGaps.map(g => `
+        <div class="gap-warning">
+          <div class="gap-icon">⚠️</div>
+          <div class="gap-text">${g.text}</div>
+          <button class="gap-dismiss" onclick="dismissGap('${g.key}')">Dismiss</button>
+        </div>`).join('');
+
       return `
         <div class="day-block">
           <div class="day-header">${dateLabel}</div>
+          ${gapHtml}
           ${segHtml}
         </div>`;
     }).join('');
   }
 
-  // ── OPEN SEGMENT ──
+    // ── OPEN SEGMENT ──
   window.openSegment = function(segId) {
     currentSegmentId = segId;
     const seg = allTrips[currentTripId].segments[segId];
