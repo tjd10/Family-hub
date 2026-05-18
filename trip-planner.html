@@ -1690,7 +1690,10 @@
 
   async function archiveTrip() {
     closeConfirm();
-    const trip = allTrips[currentTripId];
+    // Fetch fresh data from Firebase to ensure keepPdf flags are up to date
+    const snapshot = await get(ref(db, `trips/${currentTripId}`));
+    const trip = snapshot.val();
+    if (!trip) { showToast('Trip not found'); return; }
     const segments = trip.segments || {};
     // Delete PDFs not marked to keep
     for (const segId of Object.keys(segments)) {
