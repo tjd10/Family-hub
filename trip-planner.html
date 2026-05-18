@@ -985,31 +985,15 @@
       <div class="section-label">Seat Map</div>
       <!-- Editor: upload button (shown when no map yet) -->
       <button id="seatmap-upload-btn" class="seatmap-upload-btn" onclick="document.getElementById('seatmap-file-input').click()" style="display:none;">
-        🗺️ Upload seat map screenshot
+        🗺️ Upload seat map PDF
       </button>
-      <input type="file" id="seatmap-file-input" accept="image/*" style="display:none;" onchange="handleSeatMapUpload(event)"/>
-      <!-- Map with markers -->
-      <div id="seatmap-container" class="seatmap-container" style="display:none;">
-        <img id="seatmap-img" class="seatmap-img" src="" alt="Seat map"/>
-        <div id="seatmap-markers"></div>
-      </div>
-      <!-- Editor controls shown below map -->
+      <input type="file" id="seatmap-file-input" accept=".pdf,image/*" style="display:none;" onchange="handleSeatMapUpload(event)"/>
+      <!-- View seat map button (shown when map exists) -->
+      <button id="seatmap-view-btn" class="pdf-btn" onclick="viewSeatMap()" style="display:none;">
+        🗺️ View seat map
+      </button>
+      <!-- Editor remove button -->
       <div id="seatmap-editor-controls" style="display:none;">
-        <div class="seatmap-member-picker" id="member-picker">
-          <button class="member-btn" data-member="TD" data-color="#22c55e" style="background:#22c55e;" onclick="selectMember(this)">
-            <span class="member-dot"></span>Tim
-          </button>
-          <button class="member-btn" data-member="SD" data-color="#3b82f6" style="background:#3b82f6;" onclick="selectMember(this)">
-            <span class="member-dot"></span>Sarah
-          </button>
-          <button class="member-btn" data-member="PD" data-color="#a855f7" style="background:#a855f7;" onclick="selectMember(this)">
-            <span class="member-dot"></span>Paula
-          </button>
-          <button class="member-btn" data-member="ZD" data-color="#ec4899" style="background:#ec4899;" onclick="selectMember(this)">
-            <span class="member-dot"></span>Zoe
-          </button>
-        </div>
-        <div class="seatmap-hint" id="seatmap-hint">Select a family member then tap their seat on the map</div>
         <div class="seatmap-actions">
           <button class="btn-sm btn-danger" style="flex:1;" onclick="clearSeatMap()">Remove seat map</button>
         </div>
@@ -1284,14 +1268,10 @@
       if (currentTripId && document.getElementById('screen-overview').classList.contains('active')) {
         renderOverview();
       }
-      // Re-render seat markers if on detail screen
+      // Re-init seat map if on detail screen
       if (currentTripId && currentSegmentId && document.getElementById('screen-detail').classList.contains('active')) {
         const seg = allTrips[currentTripId] && allTrips[currentTripId].segments && allTrips[currentTripId].segments[currentSegmentId];
-        if (seg) {
-          renderMarkers(seg.seatMarkers || {});
-          // Re-init seat map in case URL just appeared
-          initSeatMap(seg);
-        }
+        if (seg) initSeatMap(seg);
       }
     });
   }
@@ -1525,9 +1505,8 @@
   function initSeatMap(seg) {
     const section = document.getElementById('seatmap-section');
     const uploadBtn = document.getElementById('seatmap-upload-btn');
-    const container = document.getElementById('seatmap-container');
+    const viewBtn = document.getElementById('seatmap-view-btn');
     const editorControls = document.getElementById('seatmap-editor-controls');
-    const img = document.getElementById('seatmap-img');
 
     // Only show for Flight segments
     if (seg.type !== 'Flight') {
@@ -1537,70 +1516,26 @@
     section.style.display = 'block';
 
     if (seg.seatMapUrl) {
-      img.src = seg.seatMapUrl;
-      container.style.display = 'block';
+      viewBtn.style.display = 'flex';
       uploadBtn.style.display = 'none';
       if (isEditor) editorControls.style.display = 'block';
-      renderMarkers(seg.seatMarkers || {});
-      // Set up tap-to-place on image
-      if (isEditor) {
-        img.onclick = handleSeatMapTap;
-      }
+      else editorControls.style.display = 'none';
     } else {
-      container.style.display = 'none';
+      viewBtn.style.display = 'none';
       editorControls.style.display = 'none';
       if (isEditor) uploadBtn.style.display = 'flex';
       else uploadBtn.style.display = 'none';
     }
   }
 
-  function renderMarkers(markers) {
-    const markersDiv = document.getElementById('seatmap-markers');
-    markersDiv.innerHTML = '';
-    Object.entries(markers).forEach(([id, m]) => {
-      const el = document.createElement('div');
-      el.className = 'seatmap-marker';
-      el.style.background = MEMBER_COLORS[m.member] || '#666';
-      el.style.left = m.x + '%';
-      el.style.top = m.y + '%';
-      el.textContent = m.member;
-      el.title = 'Click to remove';
-      if (isEditor) {
-        el.onclick = (e) => { e.stopPropagation(); removeMarker(id); };
-      }
-      markersDiv.appendChild(el);
-    });
-  }
-
-  window.selectMember = function(btn) {
-    document.querySelectorAll('.member-btn').forEach(b => b.classList.remove('selected'));
-    btn.classList.add('selected');
-    selectedMember = { initials: btn.dataset.member, color: btn.dataset.color };
-    document.getElementById('seatmap-hint').textContent = 'Now tap on the seat map to place ' + btn.dataset.member;
+  window.viewSeatMap = function() {
+    const seg = allTrips[currentTripId].segments[currentSegmentId];
+    if (seg && seg.seatMapUrl) {
+      window.open(seg.seatMapUrl, '_blank');
+    }
   };
 
-  function handleSeatMapTap(e) {
-    if (!selectedMember) {
-      document.getElementById('seatmap-hint').textContent = 'Select a family member first';
-      return;
-    }
-    const img = document.getElementById('seatmap-img');
-    const rect = img.getBoundingClientRect();
-    const x = ((e.clientX - rect.left) / rect.width * 100).toFixed(2);
-    const y = ((e.clientY - rect.top) / rect.height * 100).toFixed(2);
-    const markerId = Date.now().toString();
-    const markerData = { member: selectedMember.initials, x: parseFloat(x), y: parseFloat(y) };
-    set(ref(db, `trips/${currentTripId}/segments/${currentSegmentId}/seatMarkers/${markerId}`), markerData);
-    document.getElementById('seatmap-hint').textContent = 'Select a family member then tap their seat on the map';
-    document.querySelectorAll('.member-btn').forEach(b => b.classList.remove('selected'));
-    selectedMember = null;
-  }
-
-  function removeMarker(markerId) {
-    if (confirm('Remove this seat marker?')) {
-      remove(ref(db, `trips/${currentTripId}/segments/${currentSegmentId}/seatMarkers/${markerId}`));
-    }
-  }
+  // Marker functions reserved for V2 seat map overlay feature
 
   window.handleSeatMapUpload = async function(event) {
     const file = event.target.files[0];
@@ -1680,19 +1615,45 @@
     try {
       // Convert PDF to base64 and call Claude API
       const base64 = await fileToBase64(file);
-      const extracted = await extractWithClaude(base64);
-      extractedData = extracted;
+      const segments = await extractWithClaude(base64);
+      extractedData = segments;
 
-      // Populate review form
-      document.getElementById('seg-type').value = extracted.segment_type || 'Admin';
-      document.getElementById('seg-title-input').value = extracted.title || '';
-      document.getElementById('seg-start-input').value = extracted.start_time || '';
-      document.getElementById('seg-end-input').value = extracted.end_time || '';
-      document.getElementById('seg-details-input').value = extracted.details || '';
+      if (segments.length > 1) {
+        // Multiple segments — show multi-segment review
+        document.getElementById('seg-step-upload').style.display = 'none';
+        document.getElementById('seg-step-review').style.display = 'block';
+        // Populate first segment for review, show notice about multiple
+        const first = segments[0];
+        document.getElementById('seg-type').value = first.segment_type || 'Admin';
+        document.getElementById('seg-title-input').value = first.title || '';
+        document.getElementById('seg-start-input').value = first.start_time || '';
+        document.getElementById('seg-end-input').value = first.end_time || '';
+        document.getElementById('seg-details-input').value = first.details || '';
+        // Show multi-segment notice
+        let notice = document.getElementById('multi-seg-notice');
+        if (!notice) {
+          notice = document.createElement('div');
+          notice.id = 'multi-seg-notice';
+          notice.style.cssText = 'font-size:12px;color:#86efac;background:rgba(134,239,172,0.1);border:1px solid rgba(134,239,172,0.2);border-radius:8px;padding:10px 12px;margin-bottom:12px;';
+          document.getElementById('seg-step-review').insertBefore(notice, document.getElementById('seg-step-review').firstChild);
+        }
+        notice.textContent = '✓ ' + segments.length + ' segments found (e.g. outbound + return flights) — both will be saved automatically';
+        notice.style.display = 'block';
+      } else {
+        // Single segment
+        const extracted = segments[0];
+        document.getElementById('seg-type').value = extracted.segment_type || 'Admin';
+        document.getElementById('seg-title-input').value = extracted.title || '';
+        document.getElementById('seg-start-input').value = extracted.start_time || '';
+        document.getElementById('seg-end-input').value = extracted.end_time || '';
+        document.getElementById('seg-details-input').value = extracted.details || '';
+        const notice = document.getElementById('multi-seg-notice');
+        if (notice) notice.style.display = 'none';
 
-      // Show review step
-      document.getElementById('seg-step-upload').style.display = 'none';
-      document.getElementById('seg-step-review').style.display = 'block';
+        // Show review step
+        document.getElementById('seg-step-upload').style.display = 'none';
+        document.getElementById('seg-step-review').style.display = 'block';
+      }
     } catch(e) {
       showToast('Could not read PDF — please try again');
       document.getElementById('processing-state').classList.remove('visible');
@@ -1702,26 +1663,30 @@
 
   // ── EXTRACT WITH CLAUDE ──
   async function extractWithClaude(base64Pdf) {
-    const systemPrompt = `You are a structured travel data extraction engine. Extract data from the PDF and return ONLY a JSON object with these exact fields:
+    const systemPrompt = `You are a structured travel data extraction engine. Extract data from the PDF and return ONLY a JSON array of segment objects.
+
+Each segment object must have these exact fields:
 - segment_type: one of "Flight", "Accommodation", "Transfer", "Experience", "Meal", "Admin"
 - title: a short descriptive title (e.g. "BA297 London to Chicago", "Westin Chicago", "Transfer to Airport")
 - start_time: ISO datetime string (YYYY-MM-DDTHH:MM) or empty string
-- end_time: ISO datetime string (YYYY-MM-DDTHH:MM) or empty string  
+- end_time: ISO datetime string (YYYY-MM-DDTHH:MM) or empty string
 - details: all extracted fields as "Label: Value" pairs separated by newlines
 - notes: empty string
 
 Rules:
-- If a flight PDF contains TWO flights (outbound and return), extract ONLY the FIRST/OUTBOUND flight
-- Never guess or infer missing data
+- Return an ARRAY even if there is only one segment e.g. [{ ... }]
+- If a flight PDF contains TWO flights (outbound and return), return TWO separate segment objects in the array
+- For all other document types, return exactly ONE segment object in the array
+- Never guess or infer missing data — leave blank if not present
 - If unsure of type, use "Admin"
-- Return ONLY valid JSON, no other text`;
+- Return ONLY a valid JSON array, no other text`;
 
     const response = await fetch('https://unique-crumble-3301ab.netlify.app/.netlify/functions/extract', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         model: 'claude-sonnet-4-5',
-        max_tokens: 1000,
+        max_tokens: 2000,
         system: systemPrompt,
         messages: [{
           role: 'user',
@@ -1730,7 +1695,7 @@ Rules:
             source: { type: 'base64', media_type: 'application/pdf', data: base64Pdf }
           }, {
             type: 'text',
-            text: 'Extract the travel data from this document and return JSON only.'
+            text: 'Extract the travel data from this document and return a JSON array only.'
           }]
         }]
       })
@@ -1739,7 +1704,9 @@ Rules:
     const data = await response.json();
     const text = data.content[0].text;
     const clean = text.replace(/```json|```/g, '').trim();
-    return JSON.parse(clean);
+    const parsed = JSON.parse(clean);
+    // Always return an array
+    return Array.isArray(parsed) ? parsed : [parsed];
   }
 
   // ── SAVE SEGMENT ──
@@ -1747,35 +1714,60 @@ Rules:
     const title = document.getElementById('seg-title-input').value.trim();
     if (!title) { showToast('Please add a title'); return; }
 
+    // Upload PDF once, attach to all segments
     let pdfUrl = '';
+    let pdfPath = '';
     if (selectedFile) {
       try {
-        const pdfPath = `trips/${currentTripId}/pdfs/${Date.now()}_${selectedFile.name}`;
+        pdfPath = `trips/${currentTripId}/pdfs/${Date.now()}_${selectedFile.name}`;
         const storageRef = sRef(storage, pdfPath);
         await uploadBytes(storageRef, selectedFile);
         pdfUrl = await getDownloadURL(storageRef);
-        segData_pdfPath = pdfPath;
       } catch(e) {
         showToast('PDF upload failed — saving without document');
       }
     }
 
-    let segData_pdfPath = '';
-    const segData = {
-      type: document.getElementById('seg-type').value,
-      title,
-      subTitle: '',
-      startTime: document.getElementById('seg-start-input').value,
-      endTime: document.getElementById('seg-end-input').value,
-      details: document.getElementById('seg-details-input').value,
-      notes: '',
-      pdfUrl,
-      pdfPath: segData_pdfPath,
-      created: Date.now()
-    };
+    const segments = Array.isArray(extractedData) ? extractedData : [extractedData];
 
-    const newRef = push(ref(db, `trips/${currentTripId}/segments`));
-    await set(newRef, segData);
+    if (segments.length > 1) {
+      // Save all segments from the array, first one uses the reviewed title/details
+      for (let i = 0; i < segments.length; i++) {
+        const seg = segments[i];
+        const segData = {
+          type: i === 0 ? document.getElementById('seg-type').value : (seg.segment_type || 'Flight'),
+          title: i === 0 ? title : (seg.title || ''),
+          subTitle: '',
+          startTime: i === 0 ? document.getElementById('seg-start-input').value : (seg.start_time || ''),
+          endTime: i === 0 ? document.getElementById('seg-end-input').value : (seg.end_time || ''),
+          details: i === 0 ? document.getElementById('seg-details-input').value : (seg.details || ''),
+          notes: '',
+          pdfUrl,
+          pdfPath,
+          created: Date.now() + i
+        };
+        const newRef = push(ref(db, `trips/${currentTripId}/segments`));
+        await set(newRef, segData);
+      }
+      showToast(segments.length + ' segments saved!');
+    } else {
+      // Single segment
+      const segData = {
+        type: document.getElementById('seg-type').value,
+        title,
+        subTitle: '',
+        startTime: document.getElementById('seg-start-input').value,
+        endTime: document.getElementById('seg-end-input').value,
+        details: document.getElementById('seg-details-input').value,
+        notes: '',
+        pdfUrl,
+        pdfPath,
+        created: Date.now()
+      };
+      const newRef = push(ref(db, `trips/${currentTripId}/segments`));
+      await set(newRef, segData);
+    }
+
     closeModal('modal-add-segment');
     resetSegmentModal();
     showToast('Segment added!');
