@@ -769,6 +769,104 @@
       margin-left: 8px;
     }
     .signout-btn:hover { color: var(--text); }
+
+    /* ── SEAT MAP ── */
+    .seatmap-section {
+      margin-bottom: 10px;
+    }
+    .seatmap-container {
+      position: relative;
+      display: inline-block;
+      width: 100%;
+      border-radius: 12px;
+      overflow: hidden;
+      background: var(--card);
+      border: 1px solid var(--border);
+    }
+    .seatmap-img {
+      width: 100%;
+      display: block;
+      border-radius: 12px;
+      cursor: crosshair;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+    .seatmap-marker {
+      position: absolute;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      font-weight: 600;
+      color: #fff;
+      transform: translate(-50%, -50%);
+      cursor: pointer;
+      border: 2px solid rgba(255,255,255,0.4);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+      transition: transform 0.15s;
+      font-family: 'DM Sans', sans-serif;
+      z-index: 10;
+    }
+    .seatmap-marker:hover { transform: translate(-50%, -50%) scale(1.15); }
+    .seatmap-member-picker {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 10px;
+    }
+    .member-btn {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 7px 12px;
+      border-radius: 20px;
+      border: 2px solid transparent;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.15s;
+      color: #fff;
+    }
+    .member-btn.selected { border-color: rgba(255,255,255,0.6); transform: scale(1.05); }
+    .member-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.5);
+    }
+    .seatmap-hint {
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 8px;
+      text-align: center;
+    }
+    .seatmap-upload-btn {
+      width: 100%;
+      padding: 14px;
+      background: rgba(14,165,233,0.06);
+      border: 1px dashed rgba(14,165,233,0.3);
+      border-radius: 12px;
+      color: var(--accent);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 13px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: all 0.2s;
+      margin-bottom: 10px;
+    }
+    .seatmap-upload-btn:hover { background: rgba(14,165,233,0.12); border-color: rgba(14,165,233,0.5); }
+    .seatmap-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 10px;
+    }
   </style>
 </head>
 <body>
@@ -882,6 +980,42 @@
         <button class="btn-sm btn-danger" onclick="confirmDeleteSegment()">Delete</button>
       </div>
     </div>
+    <!-- Seat map section - only shown for Flight segments -->
+    <div id="seatmap-section" class="seatmap-section" style="display:none;">
+      <div class="section-label">Seat Map</div>
+      <!-- Editor: upload button (shown when no map yet) -->
+      <button id="seatmap-upload-btn" class="seatmap-upload-btn" onclick="document.getElementById('seatmap-file-input').click()" style="display:none;">
+        🗺️ Upload seat map screenshot
+      </button>
+      <input type="file" id="seatmap-file-input" accept="image/*" style="display:none;" onchange="handleSeatMapUpload(event)"/>
+      <!-- Map with markers -->
+      <div id="seatmap-container" class="seatmap-container" style="display:none;">
+        <img id="seatmap-img" class="seatmap-img" src="" alt="Seat map"/>
+        <div id="seatmap-markers"></div>
+      </div>
+      <!-- Editor controls shown below map -->
+      <div id="seatmap-editor-controls" style="display:none;">
+        <div class="seatmap-member-picker" id="member-picker">
+          <button class="member-btn" data-member="TD" data-color="#22c55e" style="background:#22c55e;" onclick="selectMember(this)">
+            <span class="member-dot"></span>Tim
+          </button>
+          <button class="member-btn" data-member="SD" data-color="#3b82f6" style="background:#3b82f6;" onclick="selectMember(this)">
+            <span class="member-dot"></span>Sarah
+          </button>
+          <button class="member-btn" data-member="PD" data-color="#a855f7" style="background:#a855f7;" onclick="selectMember(this)">
+            <span class="member-dot"></span>Paula
+          </button>
+          <button class="member-btn" data-member="ZD" data-color="#ec4899" style="background:#ec4899;" onclick="selectMember(this)">
+            <span class="member-dot"></span>Zoe
+          </button>
+        </div>
+        <div class="seatmap-hint" id="seatmap-hint">Select a family member then tap their seat on the map</div>
+        <div class="seatmap-actions">
+          <button class="btn-sm btn-danger" style="flex:1;" onclick="clearSeatMap()">Remove seat map</button>
+        </div>
+      </div>
+    </div>
+
     <div id="detail-hero" class="detail-hero"></div>
     <div id="detail-fields" class="detail-card"></div>
     <div id="detail-notes-section" style="display:none;">
@@ -1150,6 +1284,15 @@
       if (currentTripId && document.getElementById('screen-overview').classList.contains('active')) {
         renderOverview();
       }
+      // Re-render seat markers if on detail screen
+      if (currentTripId && currentSegmentId && document.getElementById('screen-detail').classList.contains('active')) {
+        const seg = allTrips[currentTripId] && allTrips[currentTripId].segments && allTrips[currentTripId].segments[currentSegmentId];
+        if (seg) {
+          renderMarkers(seg.seatMarkers || {});
+          // Re-init seat map in case URL just appeared
+          initSeatMap(seg);
+        }
+      }
     });
   }
 
@@ -1348,6 +1491,9 @@
       pdfBtn.title = 'No document attached';
     }
 
+    // Seat map
+    initSeatMap(seg);
+
     showScreen('screen-detail');
   };
 
@@ -1370,6 +1516,119 @@
     if (seg && seg.pdfUrl) {
       window.open(seg.pdfUrl, '_blank');
     }
+  };
+
+  // ── SEAT MAP ──
+  let selectedMember = null;
+  const MEMBER_COLORS = { TD: '#22c55e', SD: '#3b82f6', PD: '#a855f7', ZD: '#ec4899' };
+
+  function initSeatMap(seg) {
+    const section = document.getElementById('seatmap-section');
+    const uploadBtn = document.getElementById('seatmap-upload-btn');
+    const container = document.getElementById('seatmap-container');
+    const editorControls = document.getElementById('seatmap-editor-controls');
+    const img = document.getElementById('seatmap-img');
+
+    // Only show for Flight segments
+    if (seg.type !== 'Flight') {
+      section.style.display = 'none';
+      return;
+    }
+    section.style.display = 'block';
+
+    if (seg.seatMapUrl) {
+      img.src = seg.seatMapUrl;
+      container.style.display = 'block';
+      uploadBtn.style.display = 'none';
+      if (isEditor) editorControls.style.display = 'block';
+      renderMarkers(seg.seatMarkers || {});
+      // Set up tap-to-place on image
+      if (isEditor) {
+        img.onclick = handleSeatMapTap;
+      }
+    } else {
+      container.style.display = 'none';
+      editorControls.style.display = 'none';
+      if (isEditor) uploadBtn.style.display = 'flex';
+      else uploadBtn.style.display = 'none';
+    }
+  }
+
+  function renderMarkers(markers) {
+    const markersDiv = document.getElementById('seatmap-markers');
+    markersDiv.innerHTML = '';
+    Object.entries(markers).forEach(([id, m]) => {
+      const el = document.createElement('div');
+      el.className = 'seatmap-marker';
+      el.style.background = MEMBER_COLORS[m.member] || '#666';
+      el.style.left = m.x + '%';
+      el.style.top = m.y + '%';
+      el.textContent = m.member;
+      el.title = 'Click to remove';
+      if (isEditor) {
+        el.onclick = (e) => { e.stopPropagation(); removeMarker(id); };
+      }
+      markersDiv.appendChild(el);
+    });
+  }
+
+  window.selectMember = function(btn) {
+    document.querySelectorAll('.member-btn').forEach(b => b.classList.remove('selected'));
+    btn.classList.add('selected');
+    selectedMember = { initials: btn.dataset.member, color: btn.dataset.color };
+    document.getElementById('seatmap-hint').textContent = 'Now tap on the seat map to place ' + btn.dataset.member;
+  };
+
+  function handleSeatMapTap(e) {
+    if (!selectedMember) {
+      document.getElementById('seatmap-hint').textContent = 'Select a family member first';
+      return;
+    }
+    const img = document.getElementById('seatmap-img');
+    const rect = img.getBoundingClientRect();
+    const x = ((e.clientX - rect.left) / rect.width * 100).toFixed(2);
+    const y = ((e.clientY - rect.top) / rect.height * 100).toFixed(2);
+    const markerId = Date.now().toString();
+    const markerData = { member: selectedMember.initials, x: parseFloat(x), y: parseFloat(y) };
+    set(ref(db, `trips/${currentTripId}/segments/${currentSegmentId}/seatMarkers/${markerId}`), markerData);
+    document.getElementById('seatmap-hint').textContent = 'Select a family member then tap their seat on the map';
+    document.querySelectorAll('.member-btn').forEach(b => b.classList.remove('selected'));
+    selectedMember = null;
+  }
+
+  function removeMarker(markerId) {
+    if (confirm('Remove this seat marker?')) {
+      remove(ref(db, `trips/${currentTripId}/segments/${currentSegmentId}/seatMarkers/${markerId}`));
+    }
+  }
+
+  window.handleSeatMapUpload = async function(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    try {
+      const path = `trips/${currentTripId}/seatmaps/${currentSegmentId}_${Date.now()}`;
+      const storageRef = sRef(storage, path);
+      await uploadBytes(storageRef, file);
+      const url = await getDownloadURL(storageRef);
+      await set(ref(db, `trips/${currentTripId}/segments/${currentSegmentId}/seatMapUrl`), url);
+      await set(ref(db, `trips/${currentTripId}/segments/${currentSegmentId}/seatMapPath`), path);
+      showToast('Seat map uploaded!');
+    } catch(e) {
+      showToast('Upload failed — please try again');
+    }
+    event.target.value = '';
+  };
+
+  window.clearSeatMap = async function() {
+    if (!confirm('Remove the seat map and all seat markers?')) return;
+    const seg = allTrips[currentTripId].segments[currentSegmentId];
+    if (seg.seatMapPath) {
+      try { await deleteObject(sRef(storage, seg.seatMapPath)); } catch(e) {}
+    }
+    await set(ref(db, `trips/${currentTripId}/segments/${currentSegmentId}/seatMapUrl`), null);
+    await set(ref(db, `trips/${currentTripId}/segments/${currentSegmentId}/seatMapPath`), null);
+    await set(ref(db, `trips/${currentTripId}/segments/${currentSegmentId}/seatMarkers`), null);
+    showToast('Seat map removed');
   };
 
   // ── AUTO SET END DATE ──
