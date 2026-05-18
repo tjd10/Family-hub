@@ -1606,9 +1606,11 @@
     }
     if (path) {
       try {
-        const freshUrl = await getDownloadURL(sRef(storage, path));
+        // Normalise path — Firebase Storage handles spaces fine in getDownloadURL
+        const freshUrl = await getDownloadURL(sRef(storage, path.trim()));
         window.open(freshUrl, '_blank');
       } catch(e) {
+        console.error('PDF open error:', e);
         showToast('Could not open document — it may have been deleted');
       }
     } else {
@@ -1717,7 +1719,8 @@
     const file = event.target.files[0];
     if (!file) return;
     try {
-      const path = `trips/${currentTripId}/seatmaps/${currentSegmentId}_${Date.now()}`;
+      const safeSeatName = file.name.replace(/\s+/g, '_');
+      const path = `trips/${currentTripId}/seatmaps/${currentSegmentId}_${Date.now()}_${safeSeatName}`;
       const storageRef = sRef(storage, path);
       await uploadBytes(storageRef, file);
       const url = await getDownloadURL(storageRef);
@@ -1895,7 +1898,8 @@ Rules:
     let pdfPath = '';
     if (selectedFile) {
       try {
-        pdfPath = `trips/${currentTripId}/pdfs/${Date.now()}_${selectedFile.name}`;
+        const safeName = selectedFile.name.replace(/[\s]+/g, '_');
+        pdfPath = `trips/${currentTripId}/pdfs/${Date.now()}_${safeName}`;
         const storageRef = sRef(storage, pdfPath);
         await uploadBytes(storageRef, selectedFile);
         pdfUrl = await getDownloadURL(storageRef);
